@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Browse representative libraries around the world — filter by country, region and library type.">
+  <title>Libraries — Global Library Knowledge &amp; Information Platform</title>
+  <link rel="icon" href="../assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/reset.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <link rel="stylesheet" href="../css/pages.css">
+</head>
+<body>
+  <a class="skip-link" href="#page-main">Skip to main content</a>
+
+  <div class="dev-banner">Stage 8 Development Prototype — runtime dataset: Design Baseline V0.2 (Pilot-Validated)</div>
+
+  <!-- 全站 Header（由 js/components.js 渲染） -->
+  <header id="site-header"></header>
+
+  <!-- 面包屑（由 js/libraries.js 渲染） -->
+  <div class="container"><div id="breadcrumb"></div></div>
+
+  <main class="container" id="page-main" aria-live="polite">
+    <noscript>
+      <div class="state-box">
+        <div class="state-title">JavaScript is required</div>
+        <p class="state-text">This prototype loads its data with JavaScript. Please enable JavaScript and reload.</p>
+      </div>
+    </noscript>
+
+    <!-- 页面标题（静态内容，不依赖数据） -->
+    <div class="page-head">
+      <h1>Libraries</h1>
+      <p class="page-intro">Explore representative libraries around the world. Filter by country, region or library type, or search by name.</p>
+    </div>
+
+    <!-- 搜索 + 排序（由 js/libraries.js 绑定事件） -->
+    <section class="section" style="margin-top:24px" aria-label="Search and sort">
+      <div class="filter-row">
+        <div class="grow">
+          <label class="field-label" for="q">Search</label>
+          <input class="search-box" type="search" id="q"
+                 placeholder="Search by library name, English name, city or country...">
+        </div>
+        <div class="fixed">
+          <label class="field-label" for="sort">Sort by</label>
+          <select class="select" id="sort">
+            <option value="name">Name (A–Z)</option>
+            <option value="updated">Recently Updated</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- 筛选 + 结果两栏布局 -->
+    <section class="lib-page-layout" aria-label="Libraries list">
+      <!-- 筛选面板（选项由 js/libraries.js 从 JSON 动态生成） -->
+      <aside class="filter-panel" aria-label="Filters">
+        <h2>Filters</h2>
+        <div>
+          <label class="field-label" for="f-country">Country</label>
+          <select class="select" id="f-country"></select>
+        </div>
+        <div>
+          <label class="field-label" for="f-region">Region</label>
+          <select class="select" id="f-region"></select>
+        </div>
+        <div>
+          <label class="field-label" for="f-type">Library Type</label>
+          <select class="select" id="f-type"></select>
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-secondary btn-sm" id="btn-clear" type="button">Clear Filters</button>
+        </div>
+      </aside>
+
+      <!-- 结果区（Loading / Empty / 卡片 + 分页 由 js/libraries.js 渲染） -->
+      <div>
+        <div class="results-meta">
+          <span class="count" id="results-count"></span>
+        </div>
+        <div id="filter-tags" class="filter-tags" hidden></div>
+        <div id="lib-results" aria-live="polite"></div>
+        <div id="lib-pagination"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 全站 Footer（由 js/components.js 渲染） -->
+  <footer id="site-footer"></footer>
+
+  <script type="module" src="../js/libraries.js"></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Coming Soon — Global Library Knowledge &amp; Information Platform</title>
+  <link rel="icon" href="../assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/reset.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+  <a class="skip-link" href="#page-main">Skip to main content</a>
+
+  <div class="dev-banner">Stage 8 Development Prototype — runtime dataset: Design Baseline V0.2 (Pilot-Validated)</div>
+
+  <!-- 全站 Header（由 js/components.js 渲染） -->
+  <header id="site-header"></header>
+
+  <main class="container" id="page-main">
+    <div class="state-box" style="padding-top:96px;padding-bottom:96px">
+      <span class="icon" aria-hidden="true">🚧</span>
+      <div class="state-title">Coming Soon</div>
+      <p class="state-text">This page will be available in the next development step (Stage 8 · STEP 2+).</p>
+      <div class="state-actions">
+        <a class="btn btn-primary" href="../index.html">Back to Home</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- 全站 Footer（由 js/components.js 渲染） -->
+  <footer id="site-footer"></footer>
+
+  <script type="module">
+    /* 占位页公共骨架：复用全站 Header / Footer 组件，保证导航一致 */
+    import { renderHeader, renderFooter } from "../js/components.js";
+    renderHeader("");
+    renderFooter();
+  </script>
+</body>
+</html>

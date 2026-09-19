@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore libraries around the world on a local SVG map. Markers are shown only when real coordinate data is available.">
+  <title>World Map — Global Library Knowledge &amp; Information Platform</title>
+  <link rel="icon" href="../assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/reset.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <link rel="stylesheet" href="../css/pages.css">
+</head>
+<body>
+  <a class="skip-link" href="#page-main">Skip to main content</a>
+
+  <div class="dev-banner">Stage 8 Development Prototype — runtime dataset: Design Baseline V0.2 (Pilot-Validated)</div>
+
+  <header id="site-header"></header>
+
+  <div class="container"><div id="breadcrumb"></div></div>
+
+  <main class="container" id="page-main" aria-live="polite">
+    <noscript>
+      <div class="state-box">
+        <div class="state-title">JavaScript is required</div>
+        <p class="state-text">This prototype loads its data with JavaScript. Please enable JavaScript and reload.</p>
+      </div>
+    </noscript>
+
+    <div class="page-head">
+      <h1>Explore Libraries Around the World</h1>
+      <p class="page-intro">
+        The map is an entry point — the database is the core. Map data comes from the same
+        countries.json and libraries.json used everywhere else; no separate map dataset exists.
+        Library markers are drawn only when real latitude/longitude values are present.
+      </p>
+    </div>
+
+    <!-- 搜索与筛选（地图与下方列表共用同一组条件） -->
+    <section class="section" style="margin-top:24px" aria-label="Map filters">
+      <div class="filter-row">
+        <div class="grow">
+          <label class="field-label" for="q">Search library name</label>
+          <input class="search-box" type="search" id="q" placeholder="Search by library name, English name or city...">
+        </div>
+        <div class="fixed">
+          <label class="field-label" for="f-region">Region</label>
+          <select class="select" id="f-region"></select>
+        </div>
+        <div class="fixed">
+          <label class="field-label" for="f-type">Library type</label>
+          <select class="select" id="f-type"></select>
+        </div>
+        <div class="fixed">
+          <label class="field-label" for="f-country">Country</label>
+          <select class="select" id="f-country"></select>
+        </div>
+        <div class="fixed" style="flex:0 0 auto">
+          <label class="field-label" for="btn-reset">&nbsp;</label>
+          <button class="btn btn-secondary" id="btn-reset" type="button">Reset</button>
+        </div>
+      </div>
+      <div id="filter-tags" class="filter-tags" hidden></div>
+    </section>
+
+    <!-- 地图 + 右侧信息栏 -->
+    <section class="map-layout" aria-label="World map">
+      <div class="map-card">
+        <!-- 本地简化 SVG 世界地图（底图由 js/map-svg.js 生成，坐标点由 js/world-map.js 注入） -->
+        <div class="map-canvas" id="map-canvas"></div>
+        <!-- Marker 信息卡（hover / focus 显示） -->
+        <div class="map-tooltip" id="map-tooltip" role="status" hidden></div>
+      </div>
+
+      <aside class="map-aside">
+        <div class="card">
+          <h3>Selected Country</h3>
+          <div id="selected-country">
+            <p class="small muted">Hover or focus a country marker to see its statistics.</p>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <h3>Map Legend</h3>
+          <ul class="legend-list">
+            <li><span class="legend-dot legend-country" aria-hidden="true"></span> Country / region browsing marker — positioned at the country centre coordinate stored in countries.json. It marks a country, <b>not</b> an individual library location.</li>
+            <li><span class="legend-dot legend-library" aria-hidden="true"></span> Library marker — drawn only when a library has real latitude / longitude values (currently none, see the note below)</li>
+            <li><span class="legend-shape" aria-hidden="true"></span> Simplified landmass outline</li>
+          </ul>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <h3>Accessibility</h3>
+          <p class="small muted">
+            The map is not the only way to reach a library. Every published library is also listed below,
+            and searchable through the Libraries page and the global search.
+          </p>
+          <p style="margin-top:10px"><a class="small" href="libraries.html">Go to Libraries →</a></p>
+        </div>
+      </aside>
+    </section>
+
+    <!-- 数据说明（坐标缺失提示由 js/world-map.js 动态填充） -->
+    <div class="map-note-box" id="map-note-box"></div>
+
+    <!-- 地图下方的图书馆列表（与地图共用筛选条件） -->
+    <section class="section" aria-label="Libraries shown with the current filters">
+      <div class="section-head">
+        <h2>Libraries matching the current filters</h2>
+        <span class="caption" id="map-list-count"></span>
+      </div>
+      <div id="map-library-list" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script type="module" src="../js/world-map.js"></script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+[
+  {
+    "case_id": 1,
+    "source_id": 21,
+    "relation_type": "primary"
+  },
+  {
+    "case_id": 1,
+    "source_id": 22,
+    "relation_type": "primary"
+  },
+  {
+    "case_id": 1,
+    "source_id": 23,
+    "relation_type": "primary"
+  },
+  {
+    "case_id": 2,
+    "source_id": 26,
+    "relation_type": "primary"
+  },
+  {
+    "case_id": 2,
+    "source_id": 12,
+    "relation_type": "primary"
+  },
+  {
+    "case_id": 3,
+    "source_id": 9,
+    "relation_type": "primary"
+  },
+  {
+    "case_id": 3,
+    "source_id": 8,
+    "relation_type": "supplementary"
+  },
+  {
+    "case_id": 4,
+    "source_id": 7,
+    "relation_type": "primary"
+  },
+  {
+    "case_id": 4,
+    "source_id": 8,
+    "relation_type": "supplementary"
+  },
+  {
+    "case_id": 5,
+    "source_id": 13,
+    "relation_type": "primary"
+  },
+  {
+    "case_id": 5,
+    "source_id": 14,
+    "relation_type": "primary"
+  },
+  {
+    "case_id": 5,
+    "source_id": 15,
+    "relation_type": "primary"
+  },
+  {
+    "case_id": 6,
+    "source_id": 40,
+    "relation_type": "primary"
+  },
+  {
+    "case_id": 6,
+    "source_id": 41,
+    "relation_type": "supplementary"
+  },
+  {
+    "case_id": 7,
+    "source_id": 42,
+    "relation_type": "primary"
+  },
+  {
+    "case_id": 7,
+    "source_id": 43,
+    "relation_type": "supplementary"
+  },
+  {
+    "case_id": 8,
+    "source_id": 58,
+    "relation_type": "primary"
+  },
+  {
+    "case_id": 8,
+    "source_id": 2,
+    "relation_type": "supplementary"
+  },
+  {
+    "case_id": 9,
+    "source_id": 35,
+    "relation_type": "primary"
+  },
+  {
+    "case_id": 10,
+    "source_id": 56,
+    "relation_type": "primary"
+  },
+  {
+    "case_id": 10,
+    "source_id": 57,
+    "relation_type": "primary"
+  },
+  {
+    "case_id": 10,
+    "source_id": 55,
+    "relation_type": "supplementary"
+  }
+]

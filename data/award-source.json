@@ -1,0 +1,82 @@
+[
+  {
+    "award_id": 1,
+    "source_id": 1,
+    "relation_type": "primary"
+  },
+  {
+    "award_id": 1,
+    "source_id": 32,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_id": 1,
+    "source_id": 35,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_id": 1,
+    "source_id": 37,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_id": 1,
+    "source_id": 59,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_id": 2,
+    "source_id": 13,
+    "relation_type": "primary"
+  },
+  {
+    "award_id": 2,
+    "source_id": 55,
+    "relation_type": "primary"
+  },
+  {
+    "award_id": 3,
+    "source_id": 10,
+    "relation_type": "primary"
+  },
+  {
+    "award_id": 3,
+    "source_id": 11,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_id": 3,
+    "source_id": 53,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_id": 3,
+    "source_id": 54,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_id": 4,
+    "source_id": 48,
+    "relation_type": "primary"
+  },
+  {
+    "award_id": 4,
+    "source_id": 49,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_id": 4,
+    "source_id": 50,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_id": 4,
+    "source_id": 51,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_id": 5,
+    "source_id": 52,
+    "relation_type": "primary"
+  }
+]

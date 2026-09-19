@@ -1,0 +1,22 @@
+/* ============================================================
+   Home — 首页专属样式（其余通用样式见 layout / components）
+   依赖 variables.css
+   ============================================================ */
+
+/* 首页数据区块在 JS 渲染前隐藏，避免出现空白卡片占位 */
+[data-await-render] { display: none; }
+
+/* Ask AI 入口卡片 */
+.ask-ai-entry {
+  display: flex; gap: var(--space-24); align-items: center;
+  justify-content: space-between; flex-wrap: wrap;
+}
+.ask-ai-entry .ai-badge {
+  font-size: 12px; font-weight: 700; color: var(--color-accent);
+  background: var(--color-accent-light); border: 1px solid #E4D3A8;
+  border-radius: 4px; padding: 2px 8px; margin-left: var(--space-8);
+}
+
+/* 地图预览占位（正式交互地图在后续 STEP 实现） */
+.map-placeholder { position: relative; }
+.map-placeholder svg { display: block; width: 100%; height: auto; }

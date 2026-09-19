@@ -1,0 +1,62 @@
+[
+  {
+    "award_id": 1,
+    "award_name": "IFLA Public Library of the Year（年度公共图书馆奖）",
+    "organizer": "国际图书馆协会和机构联合会（IFLA），2014年与丹麦文化署合作发起",
+    "description": "表彰全球最佳新建公共图书馆，奖金5000美元；参评馆须为新建、显著扩建或设于非图书馆用途建筑，且于评选上一年度建成开放。历届获奖：2014 Craigieburn（澳大利亚）、2015 Kista（瑞典）、2016 Dokk1（丹麦）、2018 School 7（荷兰）、2019 Oodi（芬兰）、2021 Deichman Bjørvika（挪威）、2022 Missoula（美国）、2023 加西亚·马尔克斯（西班牙）、2024 北京城市图书馆（中国）、2025 加布里埃尔·罗伊（加拿大）。2017年未颁奖；2020年官网名单无获奖记录，原因待核实。",
+    "official_website": "https://www.ifla.org/g/public-libraries/public-library-of-the-year-award/",
+    "founded_year": 2014,
+    "frequency": "annual",
+    "status": "published",
+    "last_updated": "2026-09-19",
+    "created_at": "2026-09-19T04:00:00"
+  },
+  {
+    "award_id": 2,
+    "award_name": "IFLA Green Library Award（绿色图书馆奖）",
+    "organizer": "国际图联环境、可持续发展与图书馆专业组（ENSULIB）",
+    "description": "2016年设立，表彰在环境可持续性与社会价值融合方面表现卓越的图书馆与项目。奖项设两个平行类别：Best Green Library / Grand Scale Project（大型馆或整体改造项目）与 Best Green Library Project（专项绿色项目），各类别独立评出 1st / 2nd / 3rd。2025年为第十届，22个国家41家图书馆参评；2026年第十一届收到27个国家62份申报材料。",
+    "official_website": "https://www.ifla.org/?p=247173",
+    "founded_year": 2016,
+    "frequency": "annual",
+    "status": "published",
+    "last_updated": "2026-09-19",
+    "created_at": "2026-09-19T04:00:00"
+  },
+  {
+    "award_id": 3,
+    "award_name": "IFLA PressReader International Library Marketing Award（国际营销奖）",
+    "organizer": "国际图联管理与营销专业组（IFLA Section on Management and Marketing）",
+    "description": "图书馆营销领域国际奖项，表彰富于创造性、以结果为导向的营销活动。前三名分获奖金（2024年：3000/2000/1500欧元；2025年：3500/2500/2000欧元），前十名获嘉许证书与 PressReader 高级账户。2024年收到107份申报；2025年收到近100份申报。",
+    "official_website": "https://www.ifla.org/ifla-pressreader-international-marketing-award/",
+    "founded_year": null,
+    "frequency": "annual",
+    "status": "published",
+    "last_updated": "2026-09-19",
+    "created_at": "2026-09-19T04:00:00"
+  },
+  {
+    "award_id": 4,
+    "award_name": "AIA/ALA Library Building Award（图书馆建筑奖）",
+    "organizer": "美国建筑师学会（AIA）与美国图书馆协会（ALA）Core 分会",
+    "description": "1962年由 AIA、ALA 与国家图书委员会共同设立，是唯一以整座图书馆建筑及其设计全维度为评审对象的奖项；面向所有允许公众进入的图书馆类型，项目可位于世界任何地区。评审关注场所感、目的性、生态与环境可持续性及历史延续性，2025年由11人评审团评出5个获奖项目。",
+    "official_website": "https://www.aia.org/design-excellence/award-winners/aiaala-library-building-award-2025",
+    "founded_year": 1962,
+    "frequency": "biennial",
+    "status": "published",
+    "last_updated": "2026-09-19",
+    "created_at": "2026-09-19T04:00:00"
+  },
+  {
+    "award_id": 5,
+    "award_name": "Gale/LJ Library of the Year（年度图书馆奖）",
+    "organizer": "《Library Journal》（与 Gale 合作赞助）",
+    "description": "由美国图书馆行业媒体《Library Journal》评选的年度公共图书馆奖项，表彰在社区服务、创新与公平方面表现卓越的图书馆系统。近年获奖者包括：2017 纳什维尔公共图书馆、2018 旧金山公共图书馆、2019 洛杉矶县图书馆、2020 西雅图公共图书馆、2021 阿纳海姆公共图书馆。",
+    "official_website": "https://www.libraryjournal.com/section/libraryoftheyear",
+    "founded_year": null,
+    "frequency": "annual",
+    "status": "published",
+    "last_updated": "2026-09-19",
+    "created_at": "2026-09-19T04:00:00"
+  }
+]

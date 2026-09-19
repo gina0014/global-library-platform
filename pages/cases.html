@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Library cases and projects — innovative practice recorded in the platform dataset.">
+  <title>Cases — Global Library Knowledge &amp; Information Platform</title>
+  <link rel="icon" href="../assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/reset.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <link rel="stylesheet" href="../css/pages.css">
+</head>
+<body>
+  <a class="skip-link" href="#page-main">Skip to main content</a>
+
+  <div class="dev-banner">Stage 8 Development Prototype — runtime dataset: Design Baseline V0.2 (Pilot-Validated)</div>
+
+  <header id="site-header"></header>
+
+  <div class="container"><div id="breadcrumb"></div></div>
+
+  <main class="container" id="page-main" aria-live="polite">
+    <noscript>
+      <div class="state-box">
+        <div class="state-title">JavaScript is required</div>
+        <p class="state-text">This prototype loads its data with JavaScript. Please enable JavaScript and reload.</p>
+      </div>
+    </noscript>
+
+    <div class="page-head">
+      <h1>Cases &amp; Projects</h1>
+      <p class="page-intro">
+        Innovative practice recorded for libraries in the dataset. Every case belongs to a library;
+        the country is resolved through Case → Library → Country and is never stored in the case record.
+      </p>
+    </div>
+
+    <section class="section" style="margin-top:24px" aria-label="Search and sort cases">
+      <div class="filter-row">
+        <div class="grow">
+          <label class="field-label" for="q">Search</label>
+          <input class="search-box" type="search" id="q"
+                 placeholder="Search by case title, description, library or country...">
+        </div>
+        <div class="fixed">
+          <label class="field-label" for="sort">Sort by</label>
+          <select class="select" id="sort">
+            <option value="year">Year (newest first)</option>
+            <option value="updated">Recently Updated</option>
+            <option value="title">Title (A–Z)</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="lib-page-layout" aria-label="Cases list">
+      <aside class="filter-panel" aria-label="Filters">
+        <h2>Filters</h2>
+        <div>
+          <label class="field-label" for="f-topic">Topic</label>
+          <select class="select" id="f-topic"></select>
+        </div>
+        <div>
+          <label class="field-label" for="f-year">Year</label>
+          <select class="select" id="f-year"></select>
+        </div>
+        <div>
+          <label class="field-label" for="f-country">Country</label>
+          <select class="select" id="f-country"></select>
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-secondary btn-sm" id="btn-clear" type="button">Clear Filters</button>
+        </div>
+      </aside>
+
+      <div>
+        <div class="results-meta">
+          <span class="count" id="results-count"></span>
+        </div>
+        <div id="filter-tags" class="filter-tags" hidden></div>
+        <div id="case-results" aria-live="polite"></div>
+        <div id="case-pagination"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script type="module" src="../js/cases.js"></script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+/* ============================================================
+   Layout — 页面骨架：容器 / 区块 / Header / Footer / Hero
+   依赖 variables.css
+   ============================================================ */
+
+/* ---------- 容器与区块 ---------- */
+.container {
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  padding: 0 var(--space-24);
+}
+
+main.container {
+  padding-top: var(--space-24);
+  padding-bottom: var(--space-48);
+}
+
+.section { margin-top: var(--space-48); }
+
+.section-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: var(--space-16); gap: var(--space-16); flex-wrap: wrap;
+}
+.section-head .more { font-size: var(--font-size-small); }
+
+/* ---------- Header ---------- */
+.site-header {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky; top: 0; z-index: 50;
+}
+
+.header-inner {
+  display: flex; align-items: center; gap: var(--space-32);
+  min-height: var(--header-height); flex-wrap: wrap; padding: var(--space-8) 0;
+}
+
+.brand {
+  display: flex; align-items: center; gap: 10px;
+  color: var(--color-primary); font-weight: 700; white-space: nowrap;
+}
+.brand:hover { text-decoration: none; }
+.brand-mark {
+  width: 34px; height: 34px; border-radius: var(--radius-button);
+  background: var(--color-primary); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; letter-spacing: .5px; flex-shrink: 0;
+}
+.brand-text { font-size: 14px; line-height: 1.2; }
+.brand-text .en { display: block; font-size: 11px; color: var(--color-text-secondary); font-weight: 500; }
+
+.main-nav { display: flex; gap: var(--space-4); flex: 1; }
+.main-nav a {
+  padding: var(--space-8) 14px; border-radius: var(--radius-button);
+  color: var(--color-text); font-size: 14px; font-weight: 500;
+}
+.main-nav a:hover { background: var(--color-primary-light); text-decoration: none; }
+.main-nav a.active { background: var(--color-primary-light); color: var(--color-primary); font-weight: 600; }
+
+.header-actions { display: flex; align-items: center; gap: 12px; }
+
+/* 移动端菜单折叠按钮（仅移动端显示，见 responsive.css） */
+.nav-toggle {
+  display: none;
+  border: 1px solid var(--color-border); border-radius: var(--radius-button);
+  background: var(--color-surface); color: var(--color-text);
+  padding: 8px 12px; font-size: 14px; font-family: var(--font-family); cursor: pointer;
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  background: linear-gradient(180deg, var(--color-primary-light) 0%, var(--color-background) 100%);
+  border-bottom: 1px solid var(--color-border);
+  padding: 56px 0 40px;
+}
+.hero h1 { max-width: 640px; }
+.hero .sub {
+  font-size: 16px; color: var(--color-text-secondary);
+  max-width: 620px; margin-top: 12px;
+}
+.global-search {
+  display: flex; gap: var(--space-8);
+  max-width: 640px; margin-top: var(--space-24);
+}
+.global-search input { flex: 1; padding: 12px 16px; }
+.hero .search-hint { margin-top: 10px; }
+
+/* ---------- Footer ---------- */
+.site-footer {
+  background: var(--color-primary-dark); color: #D6E2EE;
+  margin-top: var(--space-64); padding: 40px 0 28px; font-size: 13px;
+}
+.footer-cols { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: var(--space-32); }
+.site-footer a { color: #D6E2EE; }
+.site-footer .footer-bottom {
+  border-top: 1px solid rgba(214, 226, 238, .25);
+  margin-top: 28px; padding-top: 16px;
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-8);
+}
+
+/* ---------- 开发版本提示条 ---------- */
+.dev-banner {
+  background: #FFF8E6; border-bottom: 1px solid #E4D3A8; color: #7A5C00;
+  font-size: 12.5px; text-align: center; padding: 5px 12px;
+}

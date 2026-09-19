@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Admin Dashboard (Prototype) — data overview, content status, recent updates and the review workflow.">
+  <title>Admin Dashboard (Prototype) — Global Library Knowledge &amp; Information Platform</title>
+  <link rel="icon" href="../assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/reset.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <link rel="stylesheet" href="../css/pages.css">
+</head>
+<body>
+  <a class="skip-link" href="#page-main">Skip to main content</a>
+
+  <div class="dev-banner">Stage 8 Development Prototype — runtime dataset: Design Baseline V0.2 (Pilot-Validated)</div>
+
+  <header id="site-header"></header>
+
+  <div class="container"><div id="breadcrumb"></div></div>
+
+  <main class="container" id="page-main" aria-live="polite">
+    <noscript>
+      <div class="state-box">
+        <div class="state-title">JavaScript is required</div>
+        <p class="state-text">This prototype loads its data with JavaScript. Please enable JavaScript and reload.</p>
+      </div>
+    </noscript>
+
+    <div class="page-head">
+      <h1>Admin Dashboard</h1>
+      <p class="page-intro">
+        A user-interface prototype for content administration: data overview, content status,
+        recent updates and the review workflow.
+      </p>
+    </div>
+
+    <!-- 明确的原型声明 + 操作反馈区 -->
+    <div class="notice-box" role="note">
+      <b>Admin UI Prototype.</b> There is no login, no account system, no database write and no CMS behind this page.
+      Statistics are calculated from the runtime JSON dataset; Edit / Review / Publish buttons are interface
+      demonstrations only and do not modify any data.
+    </div>
+    <p class="admin-feedback" id="admin-feedback" role="status" aria-live="polite"></p>
+
+    <div id="admin-content">
+      <!-- 内容由 js/admin.js 渲染（全部统计从 JSON 动态读取） -->
+    </div>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script type="module" src="../js/admin.js"></script>
+</body>
+</html>

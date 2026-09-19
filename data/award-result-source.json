@@ -1,0 +1,257 @@
+[
+  {
+    "award_result_id": 1,
+    "source_id": 3,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 1,
+    "source_id": 4,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 1,
+    "source_id": 5,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 2,
+    "source_id": 2,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 2,
+    "source_id": 33,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 2,
+    "source_id": 34,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 3,
+    "source_id": 7,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 3,
+    "source_id": 8,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 4,
+    "source_id": 12,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 4,
+    "source_id": 26,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 5,
+    "source_id": 9,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 5,
+    "source_id": 11,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 5,
+    "source_id": 8,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 6,
+    "source_id": 13,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 6,
+    "source_id": 14,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 6,
+    "source_id": 15,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 7,
+    "source_id": 38,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 7,
+    "source_id": 37,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 7,
+    "source_id": 59,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 8,
+    "source_id": 37,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 8,
+    "source_id": 59,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 9,
+    "source_id": 36,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 9,
+    "source_id": 39,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 10,
+    "source_id": 40,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 10,
+    "source_id": 41,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 11,
+    "source_id": 42,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 11,
+    "source_id": 43,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 12,
+    "source_id": 46,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 12,
+    "source_id": 47,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 12,
+    "source_id": 45,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 13,
+    "source_id": 2,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 13,
+    "source_id": 58,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 14,
+    "source_id": 35,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 14,
+    "source_id": 59,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 15,
+    "source_id": 13,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 16,
+    "source_id": 55,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 16,
+    "source_id": 56,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 16,
+    "source_id": 57,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 17,
+    "source_id": 53,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 17,
+    "source_id": 54,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 18,
+    "source_id": 53,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 18,
+    "source_id": 54,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 19,
+    "source_id": 48,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 19,
+    "source_id": 46,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 19,
+    "source_id": 47,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 20,
+    "source_id": 48,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 20,
+    "source_id": 49,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 21,
+    "source_id": 48,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 21,
+    "source_id": 49,
+    "relation_type": "supplementary"
+  },
+  {
+    "award_result_id": 22,
+    "source_id": 52,
+    "relation_type": "primary"
+  },
+  {
+    "award_result_id": 23,
+    "source_id": 52,
+    "relation_type": "primary"
+  }
+]

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Global library awards — representative international awards and the libraries recognised through award results.">
+  <title>Global Awards — Global Library Knowledge &amp; Information Platform</title>
+  <link rel="icon" href="../assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/reset.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <link rel="stylesheet" href="../css/pages.css">
+</head>
+<body>
+  <a class="skip-link" href="#page-main">Skip to main content</a>
+
+  <div class="dev-banner">Stage 8 Development Prototype — runtime dataset: Design Baseline V0.2 (Pilot-Validated)</div>
+
+  <!-- 全站 Header（由 js/components.js 渲染，含统一 Global Search） -->
+  <header id="site-header"></header>
+
+  <div class="container"><div id="breadcrumb"></div></div>
+
+  <main class="container" id="page-main" aria-live="polite">
+    <noscript>
+      <div class="state-box">
+        <div class="state-title">JavaScript is required</div>
+        <p class="state-text">This prototype loads its data with JavaScript. Please enable JavaScript and reload.</p>
+      </div>
+    </noscript>
+
+    <div class="page-head">
+      <h1>Global Library Awards</h1>
+      <p class="page-intro">
+        Representative international awards in the library field. Awards are linked to libraries only through
+        award results (Award → Award_Result → Library), never directly.
+      </p>
+    </div>
+
+    <!-- 搜索 + 排序（事件由 js/awards.js 绑定；状态保存在 URL 中） -->
+    <section class="section" style="margin-top:24px" aria-label="Search and sort awards">
+      <div class="filter-row">
+        <div class="grow">
+          <label class="field-label" for="q">Search</label>
+          <input class="search-box" type="search" id="q"
+                 placeholder="Search by award name, organizer or description...">
+        </div>
+        <div class="fixed">
+          <label class="field-label" for="sort">Sort by</label>
+          <select class="select" id="sort">
+            <option value="name">Name (A–Z)</option>
+            <option value="updated">Recently Updated</option>
+            <option value="founded">Founded year (newest)</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="lib-page-layout" aria-label="Awards list">
+      <aside class="filter-panel" aria-label="Filters">
+        <h2>Filters</h2>
+        <div>
+          <label class="field-label" for="f-organizer">Organizer</label>
+          <select class="select" id="f-organizer"></select>
+        </div>
+        <div>
+          <label class="field-label" for="f-frequency">Frequency</label>
+          <select class="select" id="f-frequency"></select>
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-secondary btn-sm" id="btn-clear" type="button">Clear Filters</button>
+        </div>
+      </aside>
+
+      <div>
+        <div class="results-meta">
+          <span class="count" id="results-count"></span>
+        </div>
+        <div id="filter-tags" class="filter-tags" hidden></div>
+        <div id="award-results" aria-live="polite"></div>
+        <div id="award-pagination"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 全站 Footer（由 js/components.js 渲染） -->
+  <footer id="site-footer"></footer>
+
+  <script type="module" src="../js/awards.js"></script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+[
+  {
+    "country_id": 1,
+    "country_name": "中国",
+    "country_code": "CN",
+    "region": "Asia",
+    "description": "Pilot 与 Demo 数据集的核心样本国，涵盖国家馆、省级馆、高校馆与城市/区县级公共图书馆四级体系；2024 年北京城市图书馆获 IFLA 年度公共图书馆奖，为中国首次。",
+    "latitude": 35.0,
+    "longitude": 105.0,
+    "status": "published",
+    "last_updated": "2026-09-19",
+    "created_at": "2026-09-19T04:00:00"
+  },
+  {
+    "country_id": 2,
+    "country_name": "美国",
+    "country_code": "US",
+    "region": "North America",
+    "description": "拥有大型公共图书馆系统与国家图书馆体系；样本含纽约公共图书馆、国会图书馆、布鲁克林公共图书馆、米苏拉公共图书馆等，覆盖 IFLA 与 ALA/AIA 两类奖项。",
+    "latitude": 39.8,
+    "longitude": -98.6,
+    "status": "published",
+    "last_updated": "2026-09-19",
+    "created_at": "2026-09-19T04:00:00"
+  },
+  {
+    "country_id": 3,
+    "country_name": "丹麦",
+    "country_code": "DK",
+    "region": "Europe",
+    "description": "公共图书馆传统深厚，2016 年年度公共图书馆奖由奥胡斯 Dokk1 获得；丹麦皇家图书馆为国家图书馆。",
+    "latitude": 56.0,
+    "longitude": 10.0,
+    "status": "published",
+    "last_updated": "2026-09-19",
+    "created_at": "2026-09-19T04:00:00"
+  },
+  {
+    "country_id": 4,
+    "country_name": "西班牙",
+    "country_code": "ES",
+    "region": "Europe",
+    "description": "2023 年巴塞罗那加西亚·马尔克斯图书馆获 IFLA 年度公共图书馆奖，为西班牙图书馆首次入围并获奖。",
+    "latitude": 40.4,
+    "longitude": -3.7,
+    "status": "published",
+    "last_updated": "2026-09-19",
+    "created_at": "2026-09-19T04:00:00"
+  },
+  {
+    "country_id": 5,
+    "country_name": "芬兰",
+    "country_code": "FI",
+    "region": "Europe",
+    "description": "公共图书馆法与全民阅读传统成熟；2019 年赫尔辛基中央图书馆 Oodi 获 IFLA 年度公共图书馆奖。",
+    "latitude": 64.0,
+    "longitude": 26.0,
+    "status": "published",
+    "last_updated": "2026-09-19",
+    "created_at": "2026-09-19T04:00:00"
+  },
+  {
+    "country_id": 6,
+    "country_name": "挪威",
+    "country_code": "NO",
+    "region": "Europe",
+    "description": "2021 年奥斯陆 Deichman Bjørvika 获 IFLA 年度公共图书馆奖，以被动房标准与城市文化客厅定位著称。",
+    "latitude": 61.0,
+    "longitude": 8.5,
+    "status": "published",
+    "last_updated": "2026-09-19",
+    "created_at": "2026-09-19T04:00:00"
+  },
+  {
+    "country_id": 7,
+    "country_name": "加拿大",
+    "country_code": "CA",
+    "region": "North America",
+    "description": "2025 年魁北克市加布里埃尔·罗伊图书馆获 IFLA 年度公共图书馆奖，以既有建筑更新与社区共同设计为特色。",
+    "latitude": 56.1,
+    "longitude": -106.3,
+    "status": "published",
+    "last_updated": "2026-09-19",
+    "created_at": "2026-09-19T04:00:00"
+  },
+  {
+    "country_id": 8,
+    "country_name": "荷兰",
+    "country_code": "NL",
+    "region": "Europe",
+    "description": "2018 年登海尔德 School 7（KopGroep 图书馆）获 IFLA 年度公共图书馆奖，为荷兰图书馆首次获奖。",
+    "latitude": 52.1,
+    "longitude": 5.3,
+    "status": "published",
+    "last_updated": "2026-09-19",
+    "created_at": "2026-09-19T04:00:00"
+  },
+  {
+    "country_id": 9,
+    "country_name": "瑞典",
+    "country_code": "SE",
+    "region": "Europe",
+    "description": "2015 年斯德哥尔摩 Kista 公共图书馆获 IFLA 年度公共图书馆奖；北欧 kulturhus（文化之家）理念对多国图书馆产生影响。",
+    "latitude": 60.1,
+    "longitude": 18.6,
+    "status": "published",
+    "last_updated": "2026-09-19",
+    "created_at": "2026-09-19T04:00:00"
+  },
+  {
+    "country_id": 10,
+    "country_name": "澳大利亚",
+    "country_code": "AU",
+    "region": "Oceania",
+    "description": "2014 年首届 IFLA 年度公共图书馆奖由墨尔本北郊休姆市 Craigieburn 图书馆（休姆全球学习中心）获得。",
+    "latitude": -25.3,
+    "longitude": 133.8,
+    "status": "published",
+    "last_updated": "2026-09-19",
+    "created_at": "2026-09-19T04:00:00"
+  }
+]

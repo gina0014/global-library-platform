@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Global search across countries, libraries, awards and cases in the platform dataset.">
+  <title>Search — Global Library Knowledge &amp; Information Platform</title>
+  <link rel="icon" href="../assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/reset.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <link rel="stylesheet" href="../css/pages.css">
+</head>
+<body>
+  <a class="skip-link" href="#page-main">Skip to main content</a>
+
+  <div class="dev-banner">Stage 8 Development Prototype — runtime dataset: Design Baseline V0.2 (Pilot-Validated)</div>
+
+  <header id="site-header"></header>
+
+  <div class="container"><div id="breadcrumb"></div></div>
+
+  <main class="container" id="page-main" aria-live="polite">
+    <noscript>
+      <div class="state-box">
+        <div class="state-title">JavaScript is required</div>
+        <p class="state-text">This prototype loads its data with JavaScript. Please enable JavaScript and reload.</p>
+      </div>
+    </noscript>
+
+    <div class="page-head">
+      <h1>Search Results</h1>
+      <p class="page-intro">
+        Global search covers Countries, Libraries, Awards and Cases in the runtime dataset.
+        The same search logic is used by every page of the platform.
+      </p>
+    </div>
+
+    <!-- 搜索框（提交后更新 URL 的 q 参数，链接可分享） -->
+    <section class="section" style="margin-top:24px" aria-label="Search">
+      <form class="filter-row" id="search-page-form" role="search" method="get" action="search.html">
+        <div class="grow">
+          <label class="field-label" for="q">Search</label>
+          <input class="search-box" type="search" id="q" name="q"
+                 placeholder="Search countries, libraries, awards and cases...">
+        </div>
+        <div class="fixed" style="flex:0 0 auto">
+          <label class="field-label" for="btn-search">&nbsp;</label>
+          <button class="btn btn-primary" type="submit" id="btn-search">Search</button>
+        </div>
+      </form>
+      <p class="caption" style="margin-top:8px">
+        Search scope: Country.country_name · Library.name / name_en / city · Award.award_name / organizer · Case.title / description
+      </p>
+    </section>
+
+    <div id="search-summary" class="results-meta" style="margin-top:16px"></div>
+    <div id="search-output" aria-live="polite"></div>
+
+    <section class="section" aria-label="Suggested searches">
+      <div class="section-head"><h2>Suggested Searches</h2></div>
+      <div class="suggest-row">
+        <a class="btn btn-secondary btn-sm" href="search.html?q=China">China</a>
+        <a class="btn btn-secondary btn-sm" href="search.html?q=Denmark">Denmark</a>
+        <a class="btn btn-secondary btn-sm" href="search.html?q=Oodi">Oodi</a>
+        <a class="btn btn-secondary btn-sm" href="search.html?q=Award">Award</a>
+        <a class="btn btn-secondary btn-sm" href="search.html?q=Insta">Insta Novels</a>
+        <a class="btn btn-secondary btn-sm" href="search.html?q=public">public</a>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script type="module" src="../js/search.js"></script>
+</body>
+</html>

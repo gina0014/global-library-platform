@@ -1,0 +1,45 @@
+/* ============================================================
+   Responsive — 断点规则（继承第六阶段 07-Responsive-Rules）
+   Desktop ≥1200px · Tablet 768–1199px · Mobile <768px
+   ============================================================ */
+
+/* ---------- Tablet 768–1199px ---------- */
+@media (max-width: 1199px) {
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .footer-cols { grid-template-columns: 1fr 1fr; }
+
+  /* 卡片网格：桌面 3–4 列 → 平板 2 列 */
+  .card-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* 空间较窄时收紧 Header 间距，保证 7 项导航仍在一行内 */
+  .header-inner { gap: var(--space-16); }
+  .main-nav { overflow-x: auto; }
+  .main-nav a { padding: var(--space-8) 10px; }
+}
+
+/* ---------- Mobile <768px ---------- */
+@media (max-width: 767px) {
+  .header-inner { padding: 12px 0; }
+
+  /* 移动端：导航折叠为按钮 + 下拉区块 */
+  .nav-toggle { display: inline-flex; }
+  .main-nav {
+    display: none; order: 3; width: 100%;
+    flex-direction: column; gap: var(--space-4);
+    padding-bottom: var(--space-12, 12px);
+  }
+  .main-nav.open { display: flex; }
+  .main-nav a { padding: 10px 14px; }
+
+  /* 卡片网格：平板 2 列 → 手机 1 列 */
+  .card-grid { grid-template-columns: 1fr; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+
+  .hero { padding: 32px 0 28px; }
+  .global-search { flex-direction: column; }
+  .global-search .btn { width: 100%; }
+
+  .result-item { flex-direction: column; align-items: flex-start; gap: var(--space-4); }
+
+  .section-head { flex-direction: column; align-items: flex-start; gap: var(--space-8); }
+}
