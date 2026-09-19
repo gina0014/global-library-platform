@@ -30,6 +30,17 @@
 - 页面覆盖：**12 / 12 类页面均具备可演示版本**
 - 变更历史：[CHANGELOG.md](CHANGELOG.md)（保留 Step1-v0.1 / Step2-v0.2 / Step3-v0.3 全部历史）
 
+## 3.1 Live Demo 公网演示（Stage 9 部署）
+
+- **Public URL（HTTPS）**：<https://gina0014.github.io/global-library-platform/>
+- **Deployment Platform**：GitHub Pages（静态站点托管，免费 tier；项目站点运行在子路径 `/global-library-platform/`）
+- **Deployment Version**：**Stage8-v1.0-Prototype**（与本地冻结版本**完全一致**；本阶段未修改任何网站代码、JSON 或设计，仅做部署）
+- **Source Repository（公开）**：<https://github.com/gina0014/global-library-platform>
+- **部署后验证结论**：12/12 核心页面正常渲染；11 个 JSON 正常加载；动态详情页（Country / Library / Award / Case 均按 `?id=` 正确渲染真实记录）；搜索 / 筛选 / 排序 / 分页 / 世界地图（8 个国家 Marker、0 个图书馆 Marker，未伪造坐标）/ Ask AI Demo / Admin Prototype 均正常；多浏览器与移动端（390px Device Emulation）无横向溢出；**Console Error = 0、Unexpected 404 = 0、静态资源 404 = 0**；HTTPS 强制。
+- 详细验证过程与证据见 [`docs/Stage9-Deployment-Report.md`](docs/Stage9-Deployment-Report.md)。
+
+> 本地运行方式（第 9 节）仍然完全保留，公网部署只是额外的访问途径，不影响本地开发与演示。
+
 ## 4. Features 主要功能
 
 - **浏览**：国家、图书馆、奖项、案例四大类对象的列表与档案页

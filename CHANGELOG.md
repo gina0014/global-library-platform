@@ -1,5 +1,27 @@
 # CHANGELOG — 08_Website_Development
 
+## Stage 9 Deployment（2026-09-20）
+
+> **Public deployment completed · Post-deployment validation completed ·
+> Browser validation completed · Mobile/device-emulation validation completed · Runtime JSON unchanged**
+
+- Public deployment completed（部署平台 GitHub Pages，免费 tier；运行在子路径 `/global-library-platform/`）
+- Deployment method：通过 GitHub API 创建 public 仓库 → `git push` 冻结包（仅运行文件 + README + 必要 docs）→ 开启 GitHub Pages（分支 `main` / 根目录）→ 根目录加 `.nojekyll` 防止 Jekyll 误处理
+- Deployment source version：**Stage8-v1.0-Prototype**（与本地冻结版本一致；本阶段**未修改任何网站代码、JSON 或设计**）
+- Source repository（公开）：<https://github.com/gina0014/global-library-platform>
+- Public URL（HTTPS）：<https://gina0014.github.io/global-library-platform/>
+- Post-deployment validation completed（公网环境真实浏览器校验：12/12 核心页面加载并渲染；11 个 JSON 全部 HTTP 200（`custom_404: true` 已生效）；动态详情页 Country/Library/Award/Case 按 `?id=` 正确渲染真实记录；搜索 `?q=Denmark` 返回 3 条结果；世界地图 8 个国家 Marker、0 个图书馆 Marker，未伪造坐标；Ask AI Demo 标注可见；Admin 统计正常）
+- Browser validation completed（无头 Edge 139 真实渲染 + Console 捕获：**Console Error = 0、Unexpected 404 = 0、静态资源 404 = 0**；Home 统计与精选卡由 JSON 实时渲染（stat-box=4、featured cards=10））
+- Mobile/device-emulation validation completed（Device Emulation 390×844：**横向溢出 0（390/390）**、Console Error = 0；按用户要求明确标注为 Device Emulation，非真实物理设备）
+- HTTPS enforced（github.io 强制 HTTPS，浏览器无安全警告）
+- Runtime JSON unchanged（部署包 11 个 JSON 与 Stage8-v1.0-Prototype 冻结版本一致，未重新生成、未修改）
+- Deployment issues：**无**（未发现路径错误、大小写错误、静态资源 404、CORS/MIME 错误；子路径部署因已统一使用相对路径 + `withBase()` 而一次成功）
+- No code change → 版本**保持 Stage8-v1.0-Prototype**，未升 v1.0.1
+- Added docs/Stage9-Deployment-Report.md（13 节：部署平台 / 日期 / 源版本 / 公网 URL / 部署方式 / 部署文件 / 部署后验证 / 浏览器验证 / 移动端验证 / Console 与 404 / 部署问题 / 已知限制 / 最终结果）
+- README 增加「3.1 Live Demo 公网演示」节（含 Public URL / 部署平台 / 部署版本 / 仓库地址 / 验证结论），并保留第 9 节本地运行说明
+- Security note：部署使用的 GitHub Personal Access Token 仅具 `public_repo` 作用域、短期有效，部署完成后可由仓库所有者随时撤销，网站本身不含任何密钥或真实凭证
+
+
 ## Stage8-Step1-v0.1（2026-09-19）
 
 > 稳定版本标记。基于 Design Baseline V0.2（Pilot-Validated）运行时数据集。
