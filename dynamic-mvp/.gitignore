@@ -1,0 +1,25 @@
+# ============================================================
+# dynamic-mvp — 本地 Dynamic MVP 工作目录
+# 规则：只跟踪「代码 / 迁移脚本 / 文档」，不跟踪任何运行时产物与机密
+# ============================================================
+
+# 1) 本地机密（真实凭据一律不入库，只提交 .env.example）
+.env
+
+# 2) 运行时 / 容器生成物
+#    PostgreSQL 数据与 Directus 运行时均在 docker volume 中，不落在工作区；
+#    这里兜底拦截任何被导出到工作区的运行时文件。
+*.log
+db-data/
+directus-uploads/
+docker-*.dump
+*.sql.dump
+
+# 3) 浏览器自动化产物（CDP profile / 抓取的 DOM / 测试证据）
+.cdp-profile/
+evidence/
+*.png
+
+# 4) Python 缓存
+__pycache__/
+*.pyc

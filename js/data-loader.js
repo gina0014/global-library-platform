@@ -1,10 +1,14 @@
 /* ============================================================
-   data-loader.js — 统一 JSON 数据加载入口
-   所有页面通过本模块读取 data/ 下的运行时数据集，
-   不允许各页面自行 fetch。
+   data-loader.js — 统一数据加载入口（Single Data Access Point）
+   所有页面通过本模块读取数据，不允许各页面自行 fetch。
+
+   数据源（Issue 001 起）：
+   - Library / Country → Directus API（已迁移到 PostgreSQL）
+   - Award / Award Result / Case / Source → 现有 data/*.json
+   切换只发生在本文件内，页面脚本零改动。
 
    错误处理约定：
-   - 网络失败 / 文件不存在 / JSON 解析失败 → 抛出 DataLoadError
+   - 网络失败 / 文件不存在 / JSON 解析失败 / API 载荷异常 → 抛出 DataLoadError
    - 同时用 console.error 记录技术细节
    - 调用方（页面脚本）负责把错误展示为用户可理解的状态
    ============================================================ */
@@ -12,15 +16,38 @@
 import { APP_CONFIG } from "./config.js";
 import { withBase } from "./utils.js";
 
-/** 自定义错误类型：携带发生原因和出错的文件地址，便于排查 */
+/** 自定义错误类型：携带发生原因和出错的地址，便于排查 */
 export class DataLoadError extends Error {
   constructor(reason, url, detail) {
     super(`Failed to load ${url} (${reason})`);
     this.name = "DataLoadError";
-    this.reason = reason;   // "network" | "http" | "parse"
+    this.reason = reason;   // "network" | "http" | "parse" | "api"
     this.url = url;
     this.detail = detail;
   }
+}
+
+/* ------------------------------------------------------------
+   Issue 001 — 数据源切换配置
+   仅本文件可见：页面脚本、URL、UI、data/*.json 均不感知数据来源。
+   DATA_SOURCE_MODE：
+     "api"  → Library / Country 走 Directus API（默认，Issue 001 生效路径）
+     "json" → 全部走 data/*.json（回退开关，不需要改动任何页面代码）
+   ------------------------------------------------------------ */
+const DATA_SOURCE_MODE = "api";
+
+const API_DATASOURCE = {
+  baseUrl: "http://localhost:8055",
+  // 核心对象 → Directus collection 名（与 PostgreSQL 表名一致）
+  collections: {
+    countries: "country",
+    libraries: "library"
+  }
+};
+
+/** 判断某个核心对象是否改走 API */
+function useApi(key) {
+  return DATA_SOURCE_MODE === "api" && Boolean(API_DATASOURCE.collections[key]);
 }
 
 /**
@@ -57,10 +84,90 @@ async function fetchJson(fileName) {
   }
 }
 
+/* ---------- Directus API 读取（Issue 001） ---------- */
+
+/**
+ * 把 API 返回的时间戳归一化回既有 JSON 契约：
+ *   "2026-09-19T00:00:00.000Z" → "2026-09-19"     （原始 JSON 中 last_updated 为日期）
+ *   "2026-09-19T04:00:00.000Z" → "2026-09-19T04:00:00"（原始 created_at 为无时区本地时间）
+ * 说明：PostgreSQL 容器固定 UTC，种子数据按 UTC 写入，因此回读值与 JSON 完全一致。
+ * @param {string|null} value
+ * @returns {string|null}
+ */
+function normalizeDate(value) {
+  if (value === null || value === undefined || value === "") return value;
+  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+  if (!match) return value;
+  const [, y, mo, d, hh = "00", mm = "00", ss = ""] = match;
+  const date = `${y}-${mo}-${d}`;
+  if (hh === "00" && mm === "00" && (ss === "" || ss === "00")) return date;
+  return `${date}T${hh}:${mm}:${ss === "" ? "00" : ss}`;
+}
+
+/**
+ * 把 API 返回的一条记录归一化为与 data/*.json 相同的字段契约。
+ * 只做日期形态归一，不做字段增删、不做计算、不缓存。
+ * @param {Object} row
+ * @returns {Object}
+ */
+function normalizeRecord(row) {
+  const record = { ...row };
+  if ("last_updated" in record) record.last_updated = normalizeDate(record.last_updated);
+  if ("created_at" in record) record.created_at = normalizeDate(record.created_at);
+  return record;
+}
+
+/**
+ * 从 Directus 读取一个 collection 的全部记录。
+ * 公开角色已在 API 层强制 status = published（见 IMPLEMENTATION-001.md）；
+ * 本处不做任何客户端过滤，避免“API 返回全部 + JS 过滤”的错误实现。
+ * @param {string} collection Directus collection 名
+ * @returns {Promise<Array>}
+ */
+async function fetchCollection(collection) {
+  const url = `${API_DATASOURCE.baseUrl}/items/${collection}?limit=-1`;
+
+  let response;
+  try {
+    response = await fetch(url);
+  } catch (err) {
+    console.error("[data-loader] Network error while fetching API:", url, err);
+    throw new DataLoadError("network", url, err);
+  }
+
+  if (!response.ok) {
+    console.error("[data-loader] HTTP error:", response.status, url);
+    throw new DataLoadError("http", url, response.status);
+  }
+
+  let payload;
+  try {
+    payload = await response.json();
+  } catch (err) {
+    console.error("[data-loader] JSON parse error:", url, err);
+    throw new DataLoadError("parse", url, err);
+  }
+
+  if (!payload || !Array.isArray(payload.data)) {
+    console.error("[data-loader] Unexpected API payload:", url, payload);
+    throw new DataLoadError("api", url, "payload.data is not an array");
+  }
+
+  return payload.data.map(normalizeRecord);
+}
+
 /* ---------- 六类核心对象 ---------- */
 
-export function loadCountries()     { return fetchJson(APP_CONFIG.dataFiles.countries); }
-export function loadLibraries()     { return fetchJson(APP_CONFIG.dataFiles.libraries); }
+export function loadCountries() {
+  return useApi("countries")
+    ? fetchCollection(API_DATASOURCE.collections.countries)
+    : fetchJson(APP_CONFIG.dataFiles.countries);
+}
+export function loadLibraries() {
+  return useApi("libraries")
+    ? fetchCollection(API_DATASOURCE.collections.libraries)
+    : fetchJson(APP_CONFIG.dataFiles.libraries);
+}
 export function loadAwards()        { return fetchJson(APP_CONFIG.dataFiles.awards); }
 export function loadAwardResults()  { return fetchJson(APP_CONFIG.dataFiles.awardResults); }
 export function loadCases()         { return fetchJson(APP_CONFIG.dataFiles.cases); }
