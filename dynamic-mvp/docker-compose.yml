@@ -1,0 +1,75 @@
+# ============================================================
+# Issue 001 — Library Dynamic Vertical Slice（本地 MVP）
+#
+# 范围：PostgreSQL + Directus（最小数据通道）
+# 禁止：公网部署、端口对外暴露、生产密钥
+# ============================================================
+
+name: glp-mvp
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: glp-mvp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      # 固定 UTC：确保 last_updated / created_at 的时间戳写入与回读可复现
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # 初始化脚本按文件名顺序执行：01-schema → 02-seed
+      - ./db/ddl:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "${POSTGRES_HOST_PORT}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_DATABASE}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  directus:
+    image: directus/directus:11
+    container_name: glp-mvp-directus
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      KEY: ${DIRECTUS_KEY}
+      SECRET: ${DIRECTUS_SECRET}
+      DB_CLIENT: pg
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD}
+      PUBLIC_URL: http://localhost:${DIRECTUS_HOST_PORT}
+      TZ: UTC
+      TELEMETRY: "false"
+      WEBSOCKETS_ENABLED: "false"
+      # 本地联调：静态站由 python -m http.server 起在 8000 端口，
+      # 与 Directus 不同源，需显式放行（仅限 localhost，禁止公网）
+      CORS_ENABLED: "true"
+      CORS_ORIGIN: "http://localhost:8000,http://127.0.0.1:8000"
+    ports:
+      - "${DIRECTUS_HOST_PORT}:8055"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"const h=require('node:http');const r=h.request({host:'127.0.0.1',port:8055,path:'/server/health',method:'GET',timeout:3000},res=>process.exit(res.statusCode===200?0:1));r.on('error',()=>process.exit(1));r.end()\""
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
+
+volumes:
+  postgres-data:

@@ -86,15 +86,15 @@
 
 | 对象 | 文件 | 记录 |
 |---|---|---|
-| Country | `countries.json` | 10 |
-| Library | `libraries.json` | 22（另 1 pending / 1 draft） |
+| Country | `countries.json` | 22 |
+| Library | `libraries.json` | 59（另 1 pending / 1 draft） |
 | Award | `awards.json` | 5 |
-| Award Result | `award-results.json` | 22（另 1 pending） |
+| Award Result | `award-results.json` | 68（另 1 pending） |
 | Case Project | `cases.json` | 9（另 1 pending） |
-| Source | `sources.json` | 59 |
+| Source | `sources.json` | 64 |
 
-**5 张来源关联表（多对多）**：`country-source.json`(19) / `library-source.json`(56) /
-`award-source.json`(16) / `award-result-source.json`(51) / `case-source.json`(22)
+**5 张来源关联表（多对多）**：`country-source.json`(33) / `library-source.json`(99) /
+`award-source.json`(18) / `award-result-source.json`(103) / `case-source.json`(22)
 
 **展示口径**：
 

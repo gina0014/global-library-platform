@@ -78,5 +78,15 @@
     "award_id": 5,
     "source_id": 52,
     "relation_type": "primary"
+  },
+  {
+    "award_id": 2,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "award_id": 3,
+    "source_id": 63,
+    "relation_type": "primary"
   }
 ]
