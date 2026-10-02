@@ -1,5 +1,20 @@
 # CHANGELOG — 08_Website_Development
 
+## Data Refresh — IFLA Awards Historical Records（2026-09-20）
+
+> 数据内容更新（精选并入两份用户 PDF），代码零改动，仅刷新运行时 JSON。
+
+- 数据来源：用户提供的两份 PDF（《2016–2024 年国际图联绿色图书馆奖》《2002–2024 年国际图联国际图书馆营销奖获奖情况》）
+- 合并范围（AskUserQuestion 选择「精选并入（推荐）」）：为既有 `award_id=2` 绿色图书馆奖、`award_id=3` 国际营销奖回填 2002–2024 历史获奖记录 + 中国/中国香港相关 + 各大洲代表
+- 单一数据源纪律：编辑 `07_Data_Construction/05_Demo_Dataset/demo_data.py` → `build_demo_json.py` 重生成 11 个 JSON → `validate-data.py` **12/12 PASS** → 同步到 `08_Website_Development/data/` 与 `Global-Library-Platform-Stage8-v1.0-Prototype/data/`（未手改任何站点 JSON）
+- 新增记录：+12 国家(id 11–22) / +37 图书馆(id 25–61) / +46 奖项结果(id 24–69：绿色 20 + 营销 26) / +5 来源(id 60–64)
+- 规模：22 国家 / 61 图书馆 / 5 奖项 / 69 奖项结果 / 10 案例 / 64 来源 / 275 关联
+- 坐标纪律：37 家新增图书馆坐标仍为 NULL（图书馆 Marker 保持 0，未伪造）；22 个国家全部带真实坐标（国家 Marker 8 → 22）
+- 质量标注：绿色奖 2020 起拆分 `GREEN_MAJOR` / `GREEN_PROJECT` 两平行类别系依据汇编文档推断（相关记录 `verify_status=to_verify` 并在 `note` 注明待 IFLA 官方公告确认）；用户 PDF 汇编来源(id 62/63)标 `to_verify`，IFLA 官方公告来源(60/61/64)标 `verified`
+- 前台可见性：新增 published 记录即时在 Awards / Library Profile / Country Profile / World Map / Home 统计中体现（统计由 JSON 实时计算）
+- 无代码改动；运行时 JSON 刷新；版本标记保持 Stage8-v1.0-Prototype（数据刷新，非版本升级）
+- README 第 6 节数据概览表已同步更新
+
 ## Stage 9 Deployment（2026-09-20）
 
 > **Public deployment completed · Post-deployment validation completed ·

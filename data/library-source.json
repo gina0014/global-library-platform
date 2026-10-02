@@ -278,5 +278,220 @@
     "library_id": 24,
     "source_id": 59,
     "relation_type": "supplementary"
+  },
+  {
+    "library_id": 25,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 26,
+    "source_id": 60,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 26,
+    "source_id": 62,
+    "relation_type": "supplementary"
+  },
+  {
+    "library_id": 27,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 28,
+    "source_id": 60,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 28,
+    "source_id": 62,
+    "relation_type": "supplementary"
+  },
+  {
+    "library_id": 29,
+    "source_id": 60,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 29,
+    "source_id": 62,
+    "relation_type": "supplementary"
+  },
+  {
+    "library_id": 30,
+    "source_id": 61,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 30,
+    "source_id": 62,
+    "relation_type": "supplementary"
+  },
+  {
+    "library_id": 30,
+    "source_id": 64,
+    "relation_type": "supplementary"
+  },
+  {
+    "library_id": 31,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 32,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 33,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 34,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 35,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 36,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 37,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 37,
+    "source_id": 63,
+    "relation_type": "supplementary"
+  },
+  {
+    "library_id": 38,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 39,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 40,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 41,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 42,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 43,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 44,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 45,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 46,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 47,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 48,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 49,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 50,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 51,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 52,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 53,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 54,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 55,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 56,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 57,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 58,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 59,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 60,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "library_id": 61,
+    "source_id": 63,
+    "relation_type": "primary"
   }
 ]

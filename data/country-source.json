@@ -93,5 +93,75 @@
     "country_id": 10,
     "source_id": 59,
     "relation_type": "supplementary"
+  },
+  {
+    "country_id": 11,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "country_id": 12,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "country_id": 13,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "country_id": 13,
+    "source_id": 63,
+    "relation_type": "supplementary"
+  },
+  {
+    "country_id": 14,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "country_id": 15,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "country_id": 15,
+    "source_id": 63,
+    "relation_type": "supplementary"
+  },
+  {
+    "country_id": 16,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "country_id": 17,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "country_id": 18,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "country_id": 19,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "country_id": 20,
+    "source_id": 62,
+    "relation_type": "primary"
+  },
+  {
+    "country_id": 21,
+    "source_id": 63,
+    "relation_type": "primary"
+  },
+  {
+    "country_id": 22,
+    "source_id": 62,
+    "relation_type": "primary"
   }
 ]
