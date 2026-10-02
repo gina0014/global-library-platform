@@ -258,6 +258,252 @@ def main():
                   if r["country_id"] not in {c["country_id"] for c in pub_countries}]
     check("AC5：59 条公开 Library 的 country_id 全部可解析", not unresolved, str(unresolved[:5]))
 
+    # ---------- 6. B2：迁移计数（JSON = DB） ----------
+    print("\n== 6. B2 迁移计数（JSON vs PostgreSQL） ==")
+
+    def jload(name):
+        return json.loads((DATA / name).read_text(encoding="utf-8"))
+
+    b2_awards = jload("awards.json")
+    b2_results = jload("award-results.json")
+    b2_cases = jload("cases.json")
+    b2_sources = jload("sources.json")
+    b2_cs = jload("country-source.json")
+    b2_ls = jload("library-source.json")
+    b2_as = jload("award-source.json")
+    b2_ars = jload("award-result-source.json")
+    b2_cas = jload("case-source.json")
+
+    def db_count(table):
+        return int(compose_psql(f"SELECT count(*) FROM {table};"))
+
+    pairs = [
+        ("award", len(b2_awards)), ("award_result", len(b2_results)),
+        ("case_project", len(b2_cases)), ("source", len(b2_sources)),
+        ("country_source", len(b2_cs)), ("library_source", len(b2_ls)),
+        ("award_source", len(b2_as)), ("award_result_source", len(b2_ars)),
+        ("case_source", len(b2_cas)),
+    ]
+    for table, json_n in pairs:
+        db_n = db_count(table)
+        check(f"AC-B2-1：{table} JSON {json_n} = DB {db_n}", json_n == db_n, f"json={json_n} db={db_n}")
+
+    # ---------- 7. B2：PK / FK / UNIQUE / CHECK / status ----------
+    print("\n== 7. B2 约束校验（PK / FK / UNIQUE / CHECK / status） ==")
+
+    def dup_pk(table, col):
+        return int(compose_psql(
+            f"SELECT count(*) FROM (SELECT {col} FROM {table} GROUP BY {col} HAVING count(*)>1) t;"))
+
+    for table, col in [("award", "award_id"), ("award_result", "award_result_id"),
+                       ("case_project", "case_id"), ("source", "source_id")]:
+        n = dup_pk(table, col)
+        check(f"PK 唯一：{table}.{col}", n == 0, f"dup={n}")
+
+    orphans = int(compose_psql(
+        "SELECT count(*) FROM award_result ar "
+        "LEFT JOIN award a ON a.award_id = ar.award_id "
+        "LEFT JOIN library l ON l.library_id = ar.library_id "
+        "WHERE a.award_id IS NULL OR l.library_id IS NULL;"))
+    check("FK 有效：award_result → award / library", orphans == 0, f"orphan={orphans}")
+
+    orphans_c = int(compose_psql(
+        "SELECT count(*) FROM case_project c "
+        "LEFT JOIN library l ON l.library_id = c.library_id WHERE l.library_id IS NULL;"))
+    check("FK 有效：case_project → library", orphans_c == 0, f"orphan={orphans_c}")
+
+    def constraint_exists(table, name):
+        return int(compose_psql(
+            "SELECT count(*) FROM pg_constraint c JOIN pg_class t ON t.oid = c.conrelid "
+            f"WHERE t.relname = '{table}' AND c.conname = '{name}';"))
+
+    check("UNIQUE 约束存在：award.uq_award_name_organizer", constraint_exists("award", "uq_award_name_organizer") == 1)
+    check("UNIQUE 约束存在：award_result.uq_award_result", constraint_exists("award_result", "uq_award_result") == 1)
+    dup_url = int(compose_psql(
+        "SELECT count(*) FROM (SELECT url FROM source WHERE url IS NOT NULL GROUP BY url HAVING count(*)>1) t;"))
+    check("UNIQUE 生效：source.url 无重复", dup_url == 0, f"dup={dup_url}")
+    dup_ar = int(compose_psql(
+        "SELECT count(*) FROM (SELECT award_id, library_id, year, category, result_type "
+        "FROM award_result GROUP BY 1,2,3,4,5 HAVING count(*)>1) t;"))
+    check("UNIQUE 生效：award_result 组合唯一键无重复", dup_ar == 0, f"dup={dup_ar}")
+
+    def check_count(table):
+        return int(compose_psql(
+            "SELECT count(*) FROM pg_constraint c JOIN pg_class t ON t.oid = c.conrelid "
+            f"WHERE t.relname = '{table}' AND c.contype = 'c';"))
+
+    for table in ["award", "award_result", "case_project", "source"]:
+        check(f"CHECK 约束已迁移：{table}", check_count(table) > 0, f"check_count={check_count(table)}")
+
+    for table in ["award", "award_result", "case_project", "source"]:
+        bad = int(compose_psql(
+            f"SELECT count(*) FROM {table} WHERE status NOT IN ('draft','pending','published');"))
+        check(f"status 取值合法：{table}", bad == 0, f"bad={bad}")
+
+    # ---------- 8. B2：公开 API 可见性 ----------
+    print("\n== 8. B2 公开 API（未带任何凭证） ==")
+    pub_award = dapi.get("/items/award?limit=-1")["data"]
+    pub_result = dapi.get("/items/award_result?limit=-1")["data"]
+    pub_case = dapi.get("/items/case_project?limit=-1")["data"]
+    pub_source = dapi.get("/items/source?limit=-1")["data"]
+    check("公开 Award 读数 = 5", len(pub_award) == 5, str(len(pub_award)))
+    check("公开 Award_Result 读数 = 68（published-only）", len(pub_result) == 68, str(len(pub_result)))
+    check("公开 Case_Project 读数 = 9（published-only）", len(pub_case) == 9, str(len(pub_case)))
+    check("公开 Source 读数 = 64", len(pub_source) == 64, str(len(pub_source)))
+    check("公开返回全部为 published",
+          all(r["status"] == "published" for r in pub_result + pub_case + pub_source + pub_award))
+
+    no_leak("AC-B2-4：公开按 ID 直取 pending award_result（15）被拒", lambda: dapi.get("/items/award_result/15"))
+    no_leak("AC-B2-4：公开按 ID 直取 pending case（3）被拒", lambda: dapi.get("/items/case_project/3"))
+    no_leak("AC-B2-4：公开 filter[status]=pending（award_result）无泄露",
+            lambda: dapi.get("/items/award_result?filter[status][_eq]=pending"))
+    no_leak("AC-B2-4：公开 filter[status]=pending（case_project）无泄露",
+            lambda: dapi.get("/items/case_project?filter[status][_eq]=pending"))
+    for coll in ["award", "award_result", "case_project", "source"]:
+        blocked(f"公开写入被拒：{coll}", lambda c=coll: dapi.post(f"/items/{c}", {"status": "draft"}))
+        blocked(f"公开删除被拒：{coll}", lambda c=coll: dapi.req("DELETE", f"/items/{c}/1"))
+
+    # ---------- 9. B2：数据保真（API vs JSON） ----------
+    print("\n== 9. B2 数据保真（公开 API vs data/*.json） ==")
+
+    def fidelity(label, json_rows, api_rows, key):
+        jm = {r[key]: r for r in json_rows if r["status"] == "published"}
+        diffs = 0
+        keybad = []
+        for row in api_rows:
+            j = comparable(jm[row[key]])
+            a = comparable(row)
+            if set(j) != set(a):
+                keybad.append(row[key])
+                continue
+            d = diff_record(j, a)
+            if d:
+                diffs += 1
+                if diffs <= 3:
+                    print(f"    [diff] {key}={row[key]}: {d}")
+        check(f"{label} 字段值逐条一致", diffs == 0 and not keybad, f"diff={diffs} key_mismatch={len(keybad)}")
+
+    fidelity("Award（5）", b2_awards, pub_award, "award_id")
+    fidelity("Award_Result（68 published）", b2_results, pub_result, "award_result_id")
+    fidelity("Case_Project（9 published）", b2_cases, pub_case, "case_id")
+    fidelity("Source（64）", b2_sources, pub_source, "source_id")
+
+    # ---------- 10. AC-B2-5：Source 追溯关系完整性 ----------
+    print("\n== 10. AC-B2-5 Source 追溯关系完整性（PostgreSQL 侧） ==")
+    rel_orphans = [
+        ("country_source", "SELECT count(*) FROM country_source r "
+                           "LEFT JOIN country c ON c.country_id = r.country_id "
+                           "LEFT JOIN source s ON s.source_id = r.source_id "
+                           "WHERE c.country_id IS NULL OR s.source_id IS NULL;"),
+        ("library_source", "SELECT count(*) FROM library_source r "
+                           "LEFT JOIN library l ON l.library_id = r.library_id "
+                           "LEFT JOIN source s ON s.source_id = r.source_id "
+                           "WHERE l.library_id IS NULL OR s.source_id IS NULL;"),
+        ("award_source", "SELECT count(*) FROM award_source r "
+                         "LEFT JOIN award a ON a.award_id = r.award_id "
+                         "LEFT JOIN source s ON s.source_id = r.source_id "
+                         "WHERE a.award_id IS NULL OR s.source_id IS NULL;"),
+        ("award_result_source", "SELECT count(*) FROM award_result_source r "
+                                "LEFT JOIN award_result ar ON ar.award_result_id = r.award_result_id "
+                                "LEFT JOIN source s ON s.source_id = r.source_id "
+                                "WHERE ar.award_result_id IS NULL OR s.source_id IS NULL;"),
+        ("case_source", "SELECT count(*) FROM case_source r "
+                        "LEFT JOIN case_project c ON c.case_id = r.case_id "
+                        "LEFT JOIN source s ON s.source_id = r.source_id "
+                        "WHERE c.case_id IS NULL OR s.source_id IS NULL;"),
+    ]
+    for name, sql in rel_orphans:
+        n = int(compose_psql(sql))
+        check(f"关联表两端 FK 完整：{name}", n == 0, f"orphan={n}")
+
+    lib1_db = int(compose_psql("SELECT count(*) FROM library_source WHERE library_id = 1;"))
+    lib1_json = len([r for r in b2_ls if r["library_id"] == 1])
+    check("AC-B2-5：Library 1 的 Source 关联数一致", lib1_db == lib1_json, f"db={lib1_db} json={lib1_json}")
+
+    traced = int(compose_psql(
+        "SELECT count(DISTINCT ar.award_result_id) FROM award_result ar "
+        "JOIN award_result_source ars ON ars.award_result_id = ar.award_result_id "
+        "WHERE ar.status = 'published';"))
+    check("AC-B2-5：published 获奖记录可追溯 Source", traced > 0, f"traced={traced}")
+
+    # ---------- 11. B2 收尾：关联表 surrogate PK + 关系集合保真 + 防泄露 ----------
+    print("\n== 11. 关联表 API 化（surrogate PK 方案） ==")
+
+    RELATIONS = [
+        # (table, entity_col, parent_table, parent_pk, json_rows)
+        ("country_source", "country_id", "country", "country_id", b2_cs),
+        ("library_source", "library_id", "library", "library_id", b2_ls),
+        ("award_source", "award_id", "award", "award_id", b2_as),
+        ("award_result_source", "award_result_id", "award_result", "award_result_id", b2_ars),
+        ("case_source", "case_id", "case_project", "case_id", b2_cas),
+    ]
+
+    for table, ecol, ptable, ppk, jrows in RELATIONS:
+        # 11a. surrogate PK
+        n_pk = int(compose_psql(
+            f"SELECT count(*) FROM {table} WHERE id IS NULL;"))
+        n_dup_pk = int(compose_psql(
+            f"SELECT count(*) FROM (SELECT id FROM {table} GROUP BY id HAVING count(*)>1) t;"))
+        check(f"surrogate PK 非空且唯一：{table}.id", n_pk == 0 and n_dup_pk == 0,
+              f"null={n_pk} dup={n_dup_pk}")
+
+        # 11b. 原复合键保留为 UNIQUE
+        check(f"复合 UNIQUE 约束存在：{table}.uq_{table}",
+              constraint_exists(table, f"uq_{table}") == 1)
+        n_dup = int(compose_psql(
+            f"SELECT count(*) FROM (SELECT {ecol}, source_id FROM {table} "
+            f"GROUP BY 1,2 HAVING count(*)>1) t;"))
+        check(f"复合关系无重复：{table} ({ecol}, source_id)", n_dup == 0, f"dup={n_dup}")
+
+        # 11c. DB 关系集合 == JSON 关系集合（逐条 (entity, source, relation_type)）
+        db_rows = compose_psql(
+            f"SELECT {ecol} || '|' || source_id || '|' || coalesce(relation_type,'') "
+            f"FROM {table} ORDER BY 1;").splitlines()
+        json_rows = sorted(f"{r[ecol]}|{r['source_id']}|{r['relation_type'] or ''}" for r in jrows)
+        check(f"关系集合与 JSON baseline 完全一致：{table}（{len(jrows)} 条）",
+              db_rows == json_rows,
+              f"db={len(db_rows)} json={len(json_rows)}"
+              + ("" if db_rows == json_rows else
+                 f" 差集={set(db_rows) ^ set(json_rows)}".__str__()[:200]))
+
+    # 11d. 公开 API：关联表可读，且只暴露 published 父实体的关系
+    print("  -- 公开关联表 API --")
+    parent_status = {
+        "country_source": ("country", "country_id", "country_id"),
+        "library_source": ("library", "library_id", "library_id"),
+        "award_source": ("award", "award_id", "award_id"),
+        "award_result_source": ("award_result", "award_result_id", "award_result_id"),
+        "case_source": ("case_project", "case_id", "case_id"),
+    }
+    for table, ecol, ptable, ppk, jrows in RELATIONS:
+        pub = dapi.get(f"/items/{table}?limit=-1")["data"]
+        check(f"公开可读：{table}（{len(pub)} 条）", len(pub) > 0, f"count={len(pub)}")
+
+        # 代理主键 id 不应出现在公开响应（字段白名单只有业务列）
+        leaked_ids = [r for r in pub if "id" in r]
+        check(f"公开响应不含技术列 id：{table}", not leaked_ids, f"leaked={len(leaked_ids)}")
+
+        # 取该表的非 published 父实体 ID 集合
+        nonpub = set(int(x) for x in compose_psql(
+            f"SELECT {ppk} FROM {ptable} WHERE status <> 'published';").splitlines())
+        exposed = {r[ecol] for r in pub} & nonpub
+        check(f"未泄露 draft/pending 父实体关系：{table}", not exposed,
+              f"exposed_parent_ids={sorted(exposed)}")
+
+        # 公开关系集合 == JSON 中「published 父实体」的关系集合
+        pub_ids = {int(x) for x in compose_psql(
+            f"SELECT {ppk} FROM {ptable} WHERE status = 'published';").splitlines()}
+        expect = sorted(f"{r[ecol]}|{r['source_id']}|{r['relation_type'] or ''}"
+                        for r in jrows if r[ecol] in pub_ids)
+        got = sorted(f"{r[ecol]}|{r['source_id']}|{r['relation_type'] or ''}" for r in pub)
+        check(f"公开关系集合 = published 父实体关系集合：{table}（{len(expect)} 条）",
+              got == expect, f"api={len(got)} expect={len(expect)}")
+
+    # 11e. 关联表公开写入/删除仍被拒
+    for table, *_ in RELATIONS:
+        blocked(f"公开写入被拒：{table}", lambda t=table: dapi.post(f"/items/{t}", {"source_id": 1}))
+        blocked(f"公开删除被拒：{table}", lambda t=table: dapi.req("DELETE", f"/items/{t}/1"))
+
     # ---------- 汇总 ----------
     print("\n== 汇总 ==")
     failed = [n for n, ok, _ in results if not ok]

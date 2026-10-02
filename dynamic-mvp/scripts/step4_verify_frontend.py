@@ -35,6 +35,20 @@ BASE = "http://localhost:8000"
 AC2_TEST_VALUE = "AC2-TEST-动态写入验证"
 LIB1 = f"{BASE}/pages/library.html?id=1"
 
+# AC-B2-6：API mode ↔ JSON mode 逐页渲染比对（无 countries 列表页，用 Country Profile 代替）
+B2_PAGES = [
+    ("home", f"{BASE}/index.html"),
+    ("libraries", f"{BASE}/pages/libraries.html"),
+    ("library", LIB1),
+    ("country", f"{BASE}/pages/country.html?id=1"),
+    ("awards", f"{BASE}/pages/awards.html"),
+    ("award", f"{BASE}/pages/award.html?id=1"),
+    ("cases", f"{BASE}/pages/cases.html"),
+    ("case", f"{BASE}/pages/case.html?id=1"),
+    ("world_map", f"{BASE}/pages/world-map.html"),
+    ("search", f"{BASE}/pages/search.html?q=library"),
+]
+
 results = []
 
 
@@ -131,13 +145,14 @@ def main():
         {"tag": "reg_world_map", "url": f"{BASE}/pages/world-map.html"},
         {"tag": "reg_country_1", "url": f"{BASE}/pages/country.html?id=1"},
         {"tag": "reg_awards", "url": f"{BASE}/pages/awards.html"},
-    ])
+    ] + [{"tag": f"b2_api_{name}", "url": url} for name, url in B2_PAGES])
 
     # ---------- 阶段 B：json 模式（AC6 对照组） ----------
     print("\n== 阶段 B：json 模式（对照组） ==", flush=True)
     try:
         set_mode("json")
-        b = run_suite([{"tag": "ac6_json_mode", "url": LIB1}])
+        b = run_suite([{"tag": "ac6_json_mode", "url": LIB1}]
+                      + [{"tag": f"b2_json_{name}", "url": url} for name, url in B2_PAGES])
     finally:
         set_mode("api")
     check("data-loader.js 已还原为 api 模式", md5(LOADER) == loader_md5_before)
@@ -167,21 +182,29 @@ def main():
           ("基斯塔" not in s) or ("No results" in s) or ("no results" in s.lower()))
     check("回归：非法 ID → Not Found", "Library Not Found" in a["ac3_bad_id"][0])
 
-    # ---------- 阶段 C：AC1（移除静态 JSON） ----------
-    print("\n== 阶段 C：AC1（移除 data/libraries.json） ==", flush=True)
+    # ---------- 阶段 C：AC1（移除静态 JSON：核心对象 + 关联表） ----------
+    print("\n== 阶段 C：AC1（移除 data/libraries.json 与 data/library-source.json） ==", flush=True)
+    rel_md5_before = md5(DATA / "library-source.json")
     try:
         (DATA / "libraries.json").rename(DATA / "libraries.json.ac1tmp")
+        (DATA / "library-source.json").rename(DATA / "library-source.json.ac1tmp")
         c = run_suite([{"tag": "ac1_no_json", "url": LIB1}])
     finally:
-        tmp = DATA / "libraries.json.ac1tmp"
-        if tmp.exists():
-            tmp.rename(DATA / "libraries.json")
+        for name in ("libraries.json", "library-source.json"):
+            tmp = DATA / f"{name}.ac1tmp"
+            if tmp.exists():
+                tmp.rename(DATA / name)
     t_ac1 = c["ac1_no_json"][0]
-    check("AC1：删除静态 JSON 后页面仍正常渲染（数据来自 API）",
+    check("AC1：删除静态 JSON 后页面仍正常渲染（核心对象来自 API）",
           "上海图书馆" in t_ac1 and "Library Not Found" not in t_ac1,
           t_ac1.splitlines()[0][:40] if t_ac1 else "空")
+    check("AC1：Source 关联表改由 API 提供（移除 library-source.json 后 Sources 仍完整）",
+          "上海图书馆官网" in t_ac1 and "No published sources" not in t_ac1,
+          "sources ok" if "上海图书馆官网" in t_ac1 else "sources missing")
     check("AC1：libraries.json 已还原且内容不变",
           md5(DATA / "libraries.json") == libs_md5_before)
+    check("AC1：library-source.json 已还原且内容不变",
+          md5(DATA / "library-source.json") == rel_md5_before)
 
     # ---------- 阶段 D / E：AC2 ----------
     print("\n== 阶段 D / E：AC2 写入 → 前台 → 还原 ==", flush=True)
@@ -210,6 +233,22 @@ def main():
     check("回归：Country 页正常显示国家名", "中国" in a["reg_country_1"][0])
     check("回归：Awards 页（仍读 JSON）正常渲染", len(a["reg_awards"][0]) > 200)
     check("回归：Library 页控制台无错误", not base_err, str(base_err)[:120])
+
+    # ---------- AC-B2-6 / AC-B2-7 ----------
+    print("\n== AC-B2-6：主要页面 API mode ↔ JSON mode 渲染比对 ==", flush=True)
+    for name, _url in B2_PAGES:
+        api_t, api_e = a.get(f"b2_api_{name}", ("", []))
+        json_t, _ = b.get(f"b2_json_{name}", ("", []))
+        check(f"AC-B2-6：{name} 无严重内容回归（渲染文本逐字一致）",
+              bool(api_t) and api_t == json_t,
+              f"len_api={len(api_t)} len_json={len(json_t)}")
+        if api_t != json_t and api_t and json_t:
+            (EVIDENCE / f"diff_{name}.txt").write_text(
+                f"--- API ---\n{api_t}\n\n--- JSON ---\n{json_t}", encoding="utf-8")
+
+    print("\n== AC-B2-7：Console 无新增严重错误 ==", flush=True)
+    err_pages = [n for n, _ in B2_PAGES if a.get(f"b2_api_{n}", ("", []))[1]]
+    check("AC-B2-7：所有页面控制台无错误（New Serious Error = 0）", not err_pages, str(err_pages))
 
     print("\n== 汇总 ==", flush=True)
     failed = [n for n, ok, _ in results if not ok]
