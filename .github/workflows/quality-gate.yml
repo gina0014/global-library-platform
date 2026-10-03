@@ -1,0 +1,98 @@
+# ============================================================
+# D2 — Automated Quality Gate
+#
+# 目标：把已成熟的手工验证（step3 / step6 / step8 / step10 / step11 中的
+# 静态与数据库部分）沉淀为 Pull Request 上的自动质量门。
+#
+# 不重写测试体系：直接复用 dynamic-mvp/scripts/ci_check.py。
+#
+# 边界（重要）：
+#   - CI 不连接任何生产 / 公网数据库：db job 只连本工作流内的临时
+#     PostgreSQL service container（随 job 结束销毁）。
+#   - CI 不写入任何外部数据，不部署，不发布。
+#   - 需要 Directus + 无头浏览器的端到端验收（step3 权限 / step6 工作流 /
+#     step8 地图 / step10 检索 / step11 Ask AI）仍保留为**本地 release gate**，
+#     原因见 IMPLEMENTATION-007.md §4：Directus E2E 在 Actions 上不稳定，
+#     不做成 flaky CI。
+# ============================================================
+
+name: Quality Gate
+
+on:
+  pull_request:
+    branches: ["**"]
+  push:
+    branches: [main]
+
+# 同一分支上并发运行时取消旧任务，节省 CI 时间
+concurrency:
+  group: quality-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ----------------------------------------------------------
+  # 1) 静态质量门：不需要任何服务
+  # ----------------------------------------------------------
+  static:
+    name: Static quality gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run static checks
+        run: python dynamic-mvp/scripts/ci_check.py --scope static
+
+  # ----------------------------------------------------------
+  # 2) 数据库质量门：临时 PostgreSQL service container
+  #    schema / 迁移完整性 · PK / FK / UNIQUE · published-only
+  #    · 父子发布一致性 · 行数与 JSON baseline 一致
+  # ----------------------------------------------------------
+  database:
+    name: Database quality gate
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_password   # 仅本 job 内的临时容器，非生产凭据
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in $(seq 1 30); do
+            if pg_isready -h 127.0.0.1 -p 5432 -U ci_user; then echo "postgres ready"; exit 0; fi
+            sleep 2
+          done
+          echo "postgres not ready in time"; exit 1
+
+      - name: Run database checks
+        env:
+          PGPASSWORD: ci_password
+        run: python dynamic-mvp/scripts/ci_check.py --scope db
