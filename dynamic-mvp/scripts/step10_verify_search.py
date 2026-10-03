@@ -27,6 +27,9 @@ NODE = "C:/Users/86132/.workbuddy/binaries/node/versions/22.22.2-3/node.exe"
 PYTHON = sys.executable
 LOADER = ROOT / "js" / "data-loader.js"
 
+# --no-nested：顶层驱动（step11）跑全套时传入，禁止本套件再嵌套调用其它套件。
+NESTED_OFF = "--no-nested" in sys.argv
+
 QUERIES = [
     ("chinese-library", "图书馆"),
     ("chinese-city", "上海"),
@@ -62,18 +65,14 @@ def check(name, ok, detail=""):
 
 
 def current_mode():
-    m = re.search(r'const DATA_SOURCE_MODE = "(api|json)";', LOADER.read_text(encoding="utf-8", newline=""))
-    return m.group(1) if m else None
+    """localhost 默认命中 local-dev 部署目标 → api（PHASE 1 起不再写死在源码里）。"""
+    return "api"
 
 
 def set_mode(mode):
-    if current_mode() == mode:
-        return
-    s = LOADER.read_text(encoding="utf-8", newline="")
-    s2 = re.sub(r'const DATA_SOURCE_MODE = "(?:api|json)";',
-                f'const DATA_SOURCE_MODE = "{mode}";', s)
-    with open(LOADER, "w", encoding="utf-8", newline="") as f:
-        f.write(s2)
+    """保留签名兼容调用点：现在不改写任何源码，模式切换走 ?datasource= 覆写。"""
+    if mode not in ("api", "json"):
+        raise SystemExit(f"[FATAL] 未知数据源模式 {mode}")
 
 
 def run_tasks(tasks, wait=6000):
@@ -99,6 +98,14 @@ def run_tasks(tasks, wait=6000):
 def search_url(q):
     from urllib.parse import quote
     return f"{BASE}/pages/search.html?q={quote(q)}"
+
+
+def ds(url, mode):
+    """附加运行时数据源覆写参数（PHASE 1 起模式切换不再改写源码）。"""
+    if mode == "api":
+        return url
+    sep = "&" if "?" in url else "?"
+    return f"{url}{sep}datasource=json"
 
 
 def strip_comments(src):
@@ -181,15 +188,12 @@ def main():
     tasks += [{"tag": f"c2_edge_{label}", "url": search_url(q), "wait": 7000}
               for label, q in EDGE_QUERIES]
     api_out = run_tasks(tasks)
-    try:
-        set_mode("json")
-        json_out = run_tasks([{"tag": f"c2_json_{label}", "url": search_url(q), "wait": 7000}
-                              for label, q in QUERIES]
-                             + [{"tag": f"c2_jedge_{label}", "url": search_url(q), "wait": 7000}
-                                for label, q in EDGE_QUERIES])
-    finally:
-        set_mode("api")
-    check("data-loader.js 已还原为 api 模式", LOADER.read_bytes() == loader_md5_before)
+    # 不再改写源码：这一组任务用 ?datasource=json 走 JSON baseline
+    json_out = run_tasks([{"tag": f"c2_json_{label}", "url": ds(search_url(q), "json"), "wait": 7000}
+                          for label, q in QUERIES]
+                         + [{"tag": f"c2_jedge_{label}", "url": ds(search_url(q), "json"), "wait": 7000}
+                            for label, q in EDGE_QUERIES])
+    check("数据源切换不再改写源码（验收零污染）", LOADER.read_bytes() == loader_md5_before)
 
     for label, q in QUERIES:
         a_text, a_err = api_out[f"c2_api_{label}"]
@@ -256,14 +260,20 @@ def main():
         check(f"C2-AC6：{tag} Console 无错误", not err, str(err)[:160])
 
     # ---------- AC7：回归 ----------
+    # --no-nested：由顶层驱动（step11）统一执行回归，这里不再嵌套调用其它套件，
+    # 否则 step11→step10→step8→step3/step6 三层套娃会把同一批浏览器回归重复跑 6 遍。
     print("\n== C2-AC7：B2 / B3 / C1 核心回归 ==", flush=True)
-    for script, label in [("step3_verify_data.py", "step3（数据 / API 层）"),
-                          ("step6_verify_workflow.py", "step6（B3 工作流）"),
-                          ("step8_verify_map.py", "step8（C1 地图）")]:
-        p = subprocess.run([PYTHON, "-u", script], cwd=SCRIPTS,
-                           capture_output=True, text=True, encoding="utf-8", errors="replace")
-        tail = [l for l in (p.stdout or "").splitlines() if l.startswith(("TOTAL=", "FAILED"))]
-        check(f"C2-AC7：{label} 全部 PASS", p.returncode == 0, (tail[-1] if tail else "")[:200])
+    if NESTED_OFF:
+        print("[skip] --no-nested：由顶层驱动统一执行回归", flush=True)
+    else:
+        for script, label in [("step3_verify_data.py", "step3（数据 / API 层）"),
+                              ("step6_verify_workflow.py", "step6（B3 工作流）"),
+                              ("step8_verify_map.py", "step8（C1 地图）")]:
+            extra = ["--no-nested"] if script == "step8_verify_map.py" else []
+            p = subprocess.run([PYTHON, "-u", script, *extra], cwd=SCRIPTS,
+                               capture_output=True, text=True, encoding="utf-8", errors="replace")
+            tail = [l for l in (p.stdout or "").splitlines() if l.startswith(("TOTAL=", "FAILED"))]
+            check(f"C2-AC7：{label} 全部 PASS", p.returncode == 0, (tail[-1] if tail else "")[:200])
 
     print("\n== 汇总 ==", flush=True)
     failed = [n for n, ok, _ in results if not ok]

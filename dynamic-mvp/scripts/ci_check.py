@@ -257,6 +257,20 @@ def scope_static():
           not any("API_DATASOURCE" in (JS / f).read_text(encoding="utf-8")
                   for f in ["search.js", "ask-ai.js", "world-map.js"] if (JS / f).exists()))
 
+    print("\n== 数据源运行时配置（PHASE 1） ==", flush=True)
+    check("data-loader.js 不再硬编码数据源模式或后端地址",
+          "DATA_SOURCE_MODE" not in loader and "localhost" not in loader)
+    cfg = (JS / "config.js").read_text(encoding="utf-8")
+    check("未知来源的默认策略是 JSON 静态演示",
+          '"json"' in cfg and "DEFAULT_DATASOURCE" in cfg)
+    node = __import__("os").environ.get("NODE_BIN", "node")
+    p = subprocess.run([node, str(ROOT / "dynamic-mvp" / "scripts" / "verify_datasource_config.mjs")],
+                       capture_output=True, text=True,
+                       encoding="utf-8", errors="replace")
+    tail = [l for l in (p.stdout or "").splitlines() if l.startswith("TOTAL=")]
+    check("数据源策略矩阵全部通过（含 GitHub Pages → JSON、HTTPS 护栏）",
+          p.returncode == 0, tail[-1] if tail else (p.stderr or "")[:160])
+
 
 # -------------------------------------------------------------------- db scope
 
