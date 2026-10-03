@@ -3,11 +3,14 @@
    URL: search.html?q=keyword
    结果按类型分组：Countries / Libraries / Awards / Cases
    每条结果显示 Type Badge + Title + 简短信息 + 详情链接。
-   搜索逻辑复用 utils.searchAllUpgraded（与 Header / Home 完全同一套）。
+   搜索统一走 data-loader.searchAll()（C2）：
+     api 模式 → 检索适配器 → Directus（服务端 filter，published-only 由权限层保证）
+     json 模式 → 回退到 utils.searchAllUpgraded（与 Header / Home 同一套客户端口径）
+   两种模式的结果口径一致（字段 haystack、顺序、结果上限均相同）。
    ============================================================ */
 
 import { APP_CONFIG } from "./config.js";
-import { loadAllCoreData } from "./data-loader.js";
+import { loadAllCoreData, searchAll } from "./data-loader.js";
 import {
   renderHeader,
   renderFooter,
@@ -17,14 +20,16 @@ import {
   emptyState,
   searchResultItem
 } from "./components.js";
-import { getQueryParam, searchAllUpgraded, escapeHtml } from "./utils.js";
+import { getQueryParam, escapeHtml } from "./utils.js";
 
-const GROUP_ORDER = ["Country", "Library", "Award", "Case"];
+// C2.3：检索对象在 Library / Award / Case 之外补充 Source（来源出处）
+const GROUP_ORDER = ["Country", "Library", "Award", "Case", "Source"];
 const GROUP_LABELS = {
   Country: "Countries",
   Library: "Libraries",
   Award: "Awards",
-  Case: "Cases"
+  Case: "Cases",
+  Source: "Sources"
 };
 
 let mainEl = null;
@@ -44,16 +49,18 @@ async function init() {
   mainEl.innerHTML = loadingState();
 
   try {
-    const data = await loadAllCoreData();
-    render(query, data);
+    // C2：检索统一走 data-loader.js（唯一数据访问点）。
+    // api 模式由检索适配器打到 Directus（服务端 filter + published-only）；
+    // json 模式回退到既有的客户端检索，两种模式的结果口径一致。
+    const results = await searchAll(query, await loadAllCoreData());
+    render(query, results);
   } catch (err) {
     mainEl.innerHTML = errorState();
     document.getElementById("btn-retry").addEventListener("click", init);
   }
 }
 
-function render(query, data) {
-  const results = searchAllUpgraded(query, data);
+function render(query, results) {
   const summaryEl = document.getElementById("search-summary");
 
   if (results.length === 0) {

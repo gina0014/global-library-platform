@@ -42,7 +42,7 @@ export class DataLoadError extends Error {
    ------------------------------------------------------------ */
 const DATA_SOURCE_MODE = "api";
 
-const API_DATASOURCE = {
+export const API_DATASOURCE = {
   baseUrl: "http://localhost:8055",
   // 核心对象 → Directus collection 名（与 PostgreSQL 表名一致）
   collections: {
@@ -269,6 +269,25 @@ export async function loadAllCoreData() {
     loadSources()
   ]);
   return { countries, libraries, awards, awardResults, cases, sources };
+}
+
+/**
+ * 全站检索入口（C2）。页面只调这一个函数，不感知检索在哪里执行：
+ *   - api 模式：交给检索适配器 → Directus（服务端 filter，published-only 由权限层保证）
+ *   - json 模式：回退到既有的客户端检索（utils.searchAllUpgraded）
+ * @param {string} query 关键词
+ * @param {Object} [jsonData] json 模式下由页面传入的已加载数据
+ * @returns {Promise<Array>} 结果项数组（type / id / title / sub）
+ */
+export async function searchAll(query, jsonData) {
+  if (useApi("libraries")) {
+    // 动态 import：避免 data-loader ↔ search-adapter 的静态循环依赖
+    const { searchDynamic } = await import("./search-adapter.js");
+    return searchDynamic(query);
+  }
+  if (!jsonData) return [];
+  const { searchAllUpgraded } = await import("./utils.js");
+  return searchAllUpgraded(query, jsonData);
 }
 
 /**

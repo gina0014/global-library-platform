@@ -127,7 +127,12 @@ def main():
         sys.exit("[FATAL] Directus 未就绪")
     admin = dapi.login(ADMIN_EMAIL, ADMIN_PASSWORD)
 
-    audit = json.loads((EVIDENCE / "c1_coordinate_audit.json").read_text(encoding="utf-8"))
+    # 审计证据属于未跟踪产物，可能不存在 → 现算一次，保证本脚本自足
+    audit_path = EVIDENCE / "c1_coordinate_audit.json"
+    if not audit_path.exists():
+        subprocess.run([PYTHON, "-u", "step7_audit_coordinates.py"], cwd=SCRIPTS,
+                       capture_output=True, text=True, encoding="utf-8", errors="replace")
+    audit = json.loads(audit_path.read_text(encoding="utf-8"))
     expected_markers = audit["expected_library_markers"]
 
     fixture_id = None
