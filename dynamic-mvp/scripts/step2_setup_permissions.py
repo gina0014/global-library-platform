@@ -2,8 +2,23 @@
 Step 2 — Directus 权限配置（幂等）
 
 公开读取（Policy: Public）
-  - library  read  → 强制 {"status": {"_eq": "published"}}
-  - country  read  → 强制 {"status": {"_eq": "published"}}
+  - library       read → 强制 {"status": {"_eq": "published"}}
+  - country       read → 强制 {"status": {"_eq": "published"}}
+  - award         read → published-only（B2 新增）
+  - award_result  read → published-only（B2 新增）
+  - case_project  read → published-only（B2 新增）
+  - source        read → published-only（B2 新增）
+  - *_source（五张关联表）read → **父实体 published-only**（最小安全方案）
+    * V0.2 schema 中这些表**没有 status 字段**，本轮不为它们新增 status；
+    * 关联表本身无敏感内容，但无条件公开会把 draft / pending 实体的
+      (实体ID, source_id) 关系泄露出去，因此**不采用 unrestricted public read**；
+    * 改为在权限层按父实体状态过滤（Directus 支持跨关系字段过滤）：
+        country_source       ← country_id.status      = published
+        library_source       ← library_id.status      = published
+        award_source         ← award_id.status        = published
+        award_result_source  ← award_result_id.status = published
+        case_source          ← case_id.status         = published
+      这样公开请求只能拿到「已发布实体的溯源关系」，与父表的 published-only 一致。
 
 最小写入通道（仅 AC2 用，Policy: Issue 001 Slice Writer）
   - library  read    （读取当前值，便于测试后还原）
@@ -50,6 +65,55 @@ LIBRARY_FIELDS = [
     "library_id", "name", "name_en", "country_id", "city", "library_type",
     "description", "website", "latitude", "longitude", "founded_year",
     "status", "last_updated", "created_at",
+]
+
+# ---------- B2：其余核心对象（均有 status → published-only） ----------
+AWARD_FIELDS = [
+    "award_id", "award_name", "organizer", "description", "official_website",
+    "founded_year", "frequency", "status", "last_updated", "created_at",
+]
+AWARD_RESULT_FIELDS = [
+    "award_result_id", "award_id", "library_id", "year", "category", "result_type",
+    "project_name", "description", "status", "last_updated", "created_at",
+]
+CASE_FIELDS = [
+    "case_id", "library_id", "title", "topic", "description", "year",
+    "project_url", "status", "last_updated", "created_at",
+]
+SOURCE_FIELDS = [
+    "source_id", "source_name", "source_type", "title", "url", "publisher",
+    "publication_date", "accessed_date", "language", "status", "last_updated", "created_at",
+]
+
+# ---------- B2 收尾：五张来源关联表 ----------
+# 关联表自身无 status；权限在**父实体**上做 published-only 过滤（跨关系字段过滤）。
+COUNTRY_SOURCE_FIELDS = ["country_id", "source_id", "relation_type"]
+LIBRARY_SOURCE_FIELDS = ["library_id", "source_id", "relation_type"]
+AWARD_SOURCE_FIELDS = ["award_id", "source_id", "relation_type"]
+AWARD_RESULT_SOURCE_FIELDS = ["award_result_id", "source_id", "relation_type"]
+CASE_SOURCE_FIELDS = ["case_id", "source_id", "relation_type"]
+
+PARENT_PUBLISHED = {
+    "country_source": {"country_id": {"status": {"_eq": "published"}}},
+    "library_source": {"library_id": {"status": {"_eq": "published"}}},
+    "award_source": {"award_id": {"status": {"_eq": "published"}}},
+    "award_result_source": {"award_result_id": {"status": {"_eq": "published"}}},
+    "case_source": {"case_id": {"status": {"_eq": "published"}}},
+}
+
+# (collection, 过滤器, 字段白名单)
+PUBLIC_READ_RULES = [
+    ("library", PUBLISHED_ONLY, LIBRARY_FIELDS),
+    ("country", PUBLISHED_ONLY, COUNTRY_FIELDS),
+    ("award", PUBLISHED_ONLY, AWARD_FIELDS),
+    ("award_result", PUBLISHED_ONLY, AWARD_RESULT_FIELDS),
+    ("case_project", PUBLISHED_ONLY, CASE_FIELDS),
+    ("source", PUBLISHED_ONLY, SOURCE_FIELDS),
+    ("country_source", PARENT_PUBLISHED["country_source"], COUNTRY_SOURCE_FIELDS),
+    ("library_source", PARENT_PUBLISHED["library_source"], LIBRARY_SOURCE_FIELDS),
+    ("award_source", PARENT_PUBLISHED["award_source"], AWARD_SOURCE_FIELDS),
+    ("award_result_source", PARENT_PUBLISHED["award_result_source"], AWARD_RESULT_SOURCE_FIELDS),
+    ("case_source", PARENT_PUBLISHED["case_source"], CASE_SOURCE_FIELDS),
 ]
 
 
@@ -150,8 +214,8 @@ def main():
     public_policy = next(p["id"] for p in policies if p.get("name") == "$t:public_label")
 
     # 1) 公开读取 —— published-only（API 层强制，不依赖前端过滤）
-    ensure_permission(tok, public_policy, "library", "read", PUBLISHED_ONLY, LIBRARY_FIELDS)
-    ensure_permission(tok, public_policy, "country", "read", PUBLISHED_ONLY, COUNTRY_FIELDS)
+    for collection, rule, fields in PUBLIC_READ_RULES:
+        ensure_permission(tok, public_policy, collection, "read", rule, fields)
 
     # 2) AC2 最小写入通道
     writer_policy = find_or_create_writer_policy(tok)

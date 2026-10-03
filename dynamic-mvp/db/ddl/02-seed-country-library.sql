@@ -1,8 +1,9 @@
 -- ============================================================
 -- 由 db/seed/generate-seed.py 自动生成 —— 请勿手改
--- 生成时间：2026-10-02 20:49:44
+-- 生成时间：2026-10-03 09:50:43
 -- 数据源：data/countries.json、data/libraries.json（Stage8-v1.0 冻结基线）
--- Country = 22；Library = 61（published 59 / pending 1 / draft 1）
+-- Country = 22（published 22）
+-- Library = 61（draft 1 / pending 1 / published 59）
 -- 显式写出主键 ID，保证与 JSON 一致
 -- ============================================================
 
