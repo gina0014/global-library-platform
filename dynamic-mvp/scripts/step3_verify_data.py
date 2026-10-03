@@ -51,6 +51,25 @@ def compose_psql(sql):
     return out.stdout.strip()
 
 
+def restore_last_updated(table, pk, pk_value, json_rows):
+    """把一条记录的 last_updated 复位到 JSON 基线值（测试收尾用）。
+
+    B3.5 的 trg_<table>_touch 触发器会在任何 UPDATE 时把该字段刷成当前时间，
+    这里临时禁用该触发器后改写、随后立即恢复，使测试对既有记录不留残留。
+    """
+    baseline = next((r.get("last_updated") for r in json_rows
+                     if r.get(pk) == pk_value), None)
+    if not baseline:
+        return None
+    trigger = f"trg_{table}_touch"
+    compose_psql(
+        f"ALTER TABLE {table} DISABLE TRIGGER {trigger}; "
+        f"UPDATE {table} SET last_updated = '{baseline}' WHERE {pk} = {pk_value}; "
+        f"ALTER TABLE {table} ENABLE TRIGGER {trigger};"
+    )
+    return baseline
+
+
 def container_status():
     cmd = ["docker", "compose", "ps", "--format", "{{.Service}}|{{.State}}|{{.Status}}"]
     out = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT / "dynamic-mvp")
@@ -71,10 +90,18 @@ def normalize_date(value):
     return f"{date}T{hh}:{mm}:{ss if ss else '00'}"
 
 
+# B3.3 起 last_updated 由数据库触发器在**任何写入**时刷新（服务端时间戳）。
+# 因此它不再是"应与 JSON baseline 逐字相等"的迁移字段 —— AC2 的写入/还原、
+# 状态流转测试都会合法地刷新它。保真比对排除该列，另设专项校验（见下）。
+SERVER_MANAGED_FIELDS = ("last_updated",)
+
+
 def comparable(record):
     out = {}
     for k, v in record.items():
-        if k in ("last_updated", "created_at"):
+        if k in SERVER_MANAGED_FIELDS:
+            continue
+        if k == "created_at":
             out[k] = normalize_date(v)
         elif isinstance(v, float) or isinstance(v, int):
             out[k] = v
@@ -135,11 +162,20 @@ def main():
             {AC2_FIELD: original},
             WRITER_TOKEN,
         )
+        # B3.5 的 last_updated 触发器会在上面这次还原写入时正常刷新时间戳
+        # （这是被验收的行为）。测试必须不留残留，因此把该字段一并复位到
+        # JSON 基线的原始值：临时禁用触发器后直接改库，改完立即恢复触发器。
+        restore_last_updated("library", "library_id", AC2_LIBRARY_ID, json_libs)
         public = dapi.get(f"/items/library/{AC2_LIBRARY_ID}")
         got = public["data"][AC2_FIELD]
         print(f"RESTORED_TO={original}")
         print(f"API_AFTER_RESTORE={got}")
         check("AC2 还原：公开 API 已回到原始值", got == original, f"{got}")
+        db_lu = compose_psql(
+            f"SELECT last_updated FROM library WHERE library_id = {AC2_LIBRARY_ID};").strip()
+        base_lu = next(r["last_updated"] for r in json_libs if r["library_id"] == AC2_LIBRARY_ID)
+        check("AC2 还原：last_updated 已复位到 JSON 基线值（测试无残留）",
+              db_lu.startswith(str(base_lu)), f"db={db_lu[:19]} baseline={base_lu}")
         return
 
     # ---------- 1. 容器状态 ----------
@@ -238,8 +274,18 @@ def main():
             diffs_total += 1
             if diffs_total <= 3:
                 print(f"    [diff] library_id={row['library_id']}: {d}")
-    check("59 条 published Library 字段值逐条一致", diffs_total == 0, f"diff={diffs_total}")
+    check("59 条 published Library 字段值逐条一致（last_updated 除外，见下）",
+          diffs_total == 0, f"diff={diffs_total}")
     check("字段集合一致（无新增冗余字段）", not key_mismatch, str(key_mismatch[:5]))
+
+    # last_updated 专项：B3.3 后它由数据库触发器写入，允许被刷新，但不允许丢失或回退
+    backdated = []
+    for row in pub_libs:
+        j = json_lib_map[row["library_id"]].get("last_updated")
+        a = row.get("last_updated")
+        if not a or (j and normalize_date(a)[:10] < normalize_date(j)[:10]):
+            backdated.append((row["library_id"], j, a))
+    check("last_updated 为服务端时间戳且不早于 baseline（B3.3）", not backdated, str(backdated[:3]))
 
     json_c_map = {r["country_id"]: r for r in json_countries}
     c_diffs = 0
@@ -346,10 +392,20 @@ def main():
     pub_result = dapi.get("/items/award_result?limit=-1")["data"]
     pub_case = dapi.get("/items/case_project?limit=-1")["data"]
     pub_source = dapi.get("/items/source?limit=-1")["data"]
-    check("公开 Award 读数 = 5", len(pub_award) == 5, str(len(pub_award)))
-    check("公开 Award_Result 读数 = 68（published-only）", len(pub_result) == 68, str(len(pub_result)))
-    check("公开 Case_Project 读数 = 9（published-only）", len(pub_case) == 9, str(len(pub_case)))
-    check("公开 Source 读数 = 64", len(pub_source) == 64, str(len(pub_source)))
+    # B3.4 起公开集合 = "自身 published **且** 父链全 published"，
+    # 期望值直接由治理视图算出（不再硬编码），避免治理规则演进后数字过期。
+    exp_award = int(compose_psql("SELECT count(*) FROM award WHERE status = 'published';"))
+    exp_result = int(compose_psql("SELECT count(*) FROM v_public_award_result;"))
+    exp_case = int(compose_psql("SELECT count(*) FROM v_public_case_project;"))
+    exp_source = int(compose_psql("SELECT count(*) FROM source WHERE status = 'published';"))
+    check(f"公开 Award 读数 = 治理期望（{exp_award}）",
+          len(pub_award) == exp_award, f"api={len(pub_award)} exp={exp_award}")
+    check(f"公开 Award_Result 读数 = 治理期望（{exp_result}，含 B3.4 父子链收敛）",
+          len(pub_result) == exp_result, f"api={len(pub_result)} exp={exp_result}")
+    check(f"公开 Case_Project 读数 = 治理期望（{exp_case}，含 B3.4 父子链收敛）",
+          len(pub_case) == exp_case, f"api={len(pub_case)} exp={exp_case}")
+    check(f"公开 Source 读数 = 治理期望（{exp_source}）",
+          len(pub_source) == exp_source, f"api={len(pub_source)} exp={exp_source}")
     check("公开返回全部为 published",
           all(r["status"] == "published" for r in pub_result + pub_case + pub_source + pub_award))
 
@@ -475,6 +531,19 @@ def main():
         "award_result_source": ("award_result", "award_result_id", "award_result_id"),
         "case_source": ("case_project", "case_id", "case_id"),
     }
+
+    def _ids(sql):
+        return {int(x) for x in compose_psql(sql).splitlines()}
+
+    # B3.4：按治理规则"应当公开"的父实体集合（两级父链由 05-governance.sql 的视图定义）
+    GOV_PARENT_IDS = {
+        "country_source": lambda: _ids("SELECT country_id FROM country WHERE status = 'published';"),
+        "library_source": lambda: _ids("SELECT library_id FROM library WHERE status = 'published';"),
+        "award_source": lambda: _ids("SELECT award_id FROM award WHERE status = 'published';"),
+        "award_result_source": lambda: _ids("SELECT award_result_id FROM v_public_award_result;"),
+        "case_source": lambda: _ids("SELECT case_id FROM v_public_case_project;"),
+    }
+
     for table, ecol, ptable, ppk, jrows in RELATIONS:
         pub = dapi.get(f"/items/{table}?limit=-1")["data"]
         check(f"公开可读：{table}（{len(pub)} 条）", len(pub) > 0, f"count={len(pub)}")
@@ -483,20 +552,19 @@ def main():
         leaked_ids = [r for r in pub if "id" in r]
         check(f"公开响应不含技术列 id：{table}", not leaked_ids, f"leaked={len(leaked_ids)}")
 
-        # 取该表的非 published 父实体 ID 集合
-        nonpub = set(int(x) for x in compose_psql(
-            f"SELECT {ppk} FROM {ptable} WHERE status <> 'published';").splitlines())
+        # 按 B3.4 治理规则"应当公开"的父实体 ID 集合
+        # （Award Result 需 Award 与 Library 同时 published；Case 需 Library published）
+        pub_ids = GOV_PARENT_IDS[table]()
+        # 取该表的非公开父实体 ID 集合（治理集合的补集）
+        all_ids = {int(x) for x in compose_psql(f"SELECT {ppk} FROM {ptable};").splitlines()}
+        nonpub = all_ids - pub_ids
         exposed = {r[ecol] for r in pub} & nonpub
-        check(f"未泄露 draft/pending 父实体关系：{table}", not exposed,
+        check(f"未泄露非公开父实体关系：{table}", not exposed,
               f"exposed_parent_ids={sorted(exposed)}")
-
-        # 公开关系集合 == JSON 中「published 父实体」的关系集合
-        pub_ids = {int(x) for x in compose_psql(
-            f"SELECT {ppk} FROM {ptable} WHERE status = 'published';").splitlines()}
         expect = sorted(f"{r[ecol]}|{r['source_id']}|{r['relation_type'] or ''}"
                         for r in jrows if r[ecol] in pub_ids)
         got = sorted(f"{r[ecol]}|{r['source_id']}|{r['relation_type'] or ''}" for r in pub)
-        check(f"公开关系集合 = published 父实体关系集合：{table}（{len(expect)} 条）",
+        check(f"公开关系集合 = 治理期望集合：{table}（{len(expect)} 条）",
               got == expect, f"api={len(got)} expect={len(expect)}")
 
     # 11e. 关联表公开写入/删除仍被拒

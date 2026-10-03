@@ -130,6 +130,30 @@ def main():
     ar_source = load("award-result-source.json")
     case_source = load("case-source.json")
 
+    # ---------- B3.4 治理纠正（仅迁移期，不改 data/*.json） ----------
+    # V0.2 基线里存在"自身 published、但父实体非 published"的孤儿记录。
+    # 父子发布一致性要求它们不能处于 published，因此在**迁移时**降为 pending。
+    # 这样：
+    #   ① 关联表只需做一级父实体过滤，避免两级 join 破坏返回行序；
+    #   ② 实体层仍保留两级行级过滤作为纵深防御。
+    # data/*.json 保留原始值不动（它是 Historical Artifact），纠正只作用于 PostgreSQL。
+    lib_status = {r["library_id"]: r["status"] for r in libraries}
+    award_status = {r["award_id"]: r["status"] for r in awards}
+    corrected = []
+    for r in award_results:
+        if r["status"] == "published" and (
+            award_status.get(r["award_id"]) != "published"
+            or lib_status.get(r["library_id"]) != "published"
+        ):
+            r["status"] = "pending"
+            corrected.append(("award_result", r["award_result_id"]))
+    for r in cases:
+        if r["status"] == "published" and lib_status.get(r["library_id"]) != "published":
+            r["status"] = "pending"
+            corrected.append(("case_project", r["case_id"]))
+    if corrected:
+        print("[B3.4 治理纠正] 父实体非 published 的记录降为 pending：", corrected)
+
     # ---------- 产出 1：Country / Library（Issue 001） ----------
     body = ["-- ---------- Country ----------"]
     body += insert_rows("country", COUNTRY_COLS, countries)
