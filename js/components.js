@@ -217,8 +217,11 @@ export function countryCard(country, libraries) {
  * @param {{type: string, id: number, title: string, sub: string}} result
  */
 export function searchResultItem(result) {
+  // Source 没有站内详情页，其详情页就是数据中记录的原始出处 URL（真实数据）
+  const external = result.type === "Source" && result.url;
+  const attrs = external ? ` target="_blank" rel="noopener noreferrer"` : "";
   return `
-  <a class="result-item" href="${searchResultHref(result)}">
+  <a class="result-item" href="${searchResultHref(result)}"${attrs}>
     <span class="tag ${searchResultTagClass(result.type)}">${escapeHtml(result.type)}</span>
     <span class="result-info">
       <span class="result-title">${escapeHtml(truncate(result.title, 90))}</span>
@@ -246,6 +249,7 @@ export function searchResultHref(result) {
     case "Library": return `${withBase(pages.libraryProfile)}?id=${result.id}`;
     case "Award":   return `${withBase(pages.awardProfile)}?id=${result.id}`;
     case "Case":    return `${withBase(pages.caseDetail)}?id=${result.id}`;
+    case "Source":  return result.url || withBase(pages.home);
     default:        return withBase(pages.home);
   }
 }

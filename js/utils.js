@@ -611,6 +611,25 @@ export function searchAllUpgraded(query, data) {
     }
   }
 
+  // Source：title / source_name / publisher（C2.3 新增检索对象，与动态检索同一口径）
+  for (const src of (data.sources || [])) {
+    if (src.status !== "published") continue;
+    const haystack = [
+      (src.title || "").toLowerCase(),
+      (src.source_name || "").toLowerCase(),
+      (src.publisher || "").toLowerCase()
+    ];
+    if (haystack.some(t => t && t.includes(keyword))) {
+      results.push({
+        type: "Source",
+        id: src.source_id,
+        title: src.title,
+        sub: [src.source_name, src.publisher].filter(Boolean).join(" · "),
+        url: src.url || ""
+      });
+    }
+  }
+
   return results.slice(0, APP_CONFIG.searchResultLimit);
 }
 
