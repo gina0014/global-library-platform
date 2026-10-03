@@ -8,6 +8,13 @@
    用法：
      node browser_suite.mjs <tasks.json> <outDir>
      tasks.json: [{ "tag": "ac1", "url": "http://...", "wait": 4500 }, ...]
+
+   可选字段（向后兼容，缺省即原有行为）：
+     expr   自定义求值表达式（异步 IIFE 亦可），用于读取 marker / 交互 / 响应式断言
+     width / height   载入前设置视口尺寸（Emulation.setDeviceMetricsOverride）
+     clickSelector    先点击该选择器，等待 waitAfterClick 后再求值 expr
+                      （用于验证 marker 跳转：点击会导航，导航前的求值上下文会被销毁，
+                        因此把"点击"与"读取跳转后的 URL"拆成两步）
    输出：
      <outDir>/<tag>.txt  （可见文本 + 控制台错误）
      stdout: 每行 "<tag>\tOK\t<length>" 或 "<tag>\tEMPTY"
@@ -99,7 +106,7 @@ async function closeTab(id) {
   }
 }
 
-const EXPR = `
+const DEFAULT_EXPR = `
   (async () => {
     const main = document.getElementById('page-main');
     return (main ? main.innerText : document.body.innerText).replace(/\\n{2,}/g, '\\n').trim();
@@ -130,13 +137,35 @@ async function run() {
         }
       });
       await cdp.send("Runtime.enable");
+      if (t.width && t.height) {
+        await cdp.send("Emulation.setDeviceMetricsOverride", {
+          width: t.width,
+          height: t.height,
+          deviceScaleFactor: 1,
+          mobile: t.width < 700,
+        });
+      }
       await sleep(t.wait || 4500);
+      if (t.clickSelector) {
+        // 点击可能触发导航并销毁当前执行上下文：这里不等待，错误也忽略，
+        // 随后在同一个 CDP 会话里读取**新文档**的状态。
+        try {
+          await cdp.send("Runtime.evaluate", {
+            expression: `(document.querySelector(${JSON.stringify(t.clickSelector)}) || { click(){} }).click()`,
+            returnByValue: true,
+          });
+        } catch {
+          /* 导航导致上下文销毁，属预期 */
+        }
+        await sleep(t.waitAfterClick || 3000);
+      }
       const res = await cdp.send("Runtime.evaluate", {
-        expression: EXPR,
+        expression: t.expr || DEFAULT_EXPR,
         awaitPromise: true,
         returnByValue: true,
       });
-      text = (res.result?.value ?? "").trim();
+      const value = res.result?.value ?? "";
+      text = typeof value === "string" ? value.trim() : JSON.stringify(value);
       ws.close();
     } catch (e) {
       errors.push("[harness] " + e.message);

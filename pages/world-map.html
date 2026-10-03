@@ -12,6 +12,9 @@
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/responsive.css">
   <link rel="stylesheet" href="../css/pages.css">
+  <!-- MapLibre GL JS（本地 vendored，离线可用；地图仅作展示层，数据仍来自 data-loader.js） -->
+  <link rel="stylesheet" href="../assets/vendor/maplibre-gl/maplibre-gl.css">
+  <link rel="stylesheet" href="../css/map-gl.css">
 </head>
 <body>
   <a class="skip-link" href="#page-main">Skip to main content</a>
@@ -69,7 +72,9 @@
     <!-- 地图 + 右侧信息栏 -->
     <section class="map-layout" aria-label="World map">
       <div class="map-card">
-        <!-- 本地简化 SVG 世界地图（底图由 js/map-svg.js 生成，坐标点由 js/world-map.js 注入） -->
+        <!-- 主视图：MapLibre 动态地图（离线底图 + marker，数据来自 data-loader.js） -->
+        <div class="map-canvas map-gl" id="map-gl" hidden></div>
+        <!-- 降级视图：WebGL 不可用时回退到本地简化 SVG 世界地图 -->
         <div class="map-canvas" id="map-canvas"></div>
         <!-- Marker 信息卡（hover / focus 显示） -->
         <div class="map-tooltip" id="map-tooltip" role="status" hidden></div>
@@ -88,7 +93,7 @@
           <ul class="legend-list">
             <li><span class="legend-dot legend-country" aria-hidden="true"></span> Country / region browsing marker — positioned at the country centre coordinate stored in countries.json. It marks a country, <b>not</b> an individual library location.</li>
             <li><span class="legend-dot legend-library" aria-hidden="true"></span> Library marker — drawn only when a library has real latitude / longitude values (currently none, see the note below)</li>
-            <li><span class="legend-shape" aria-hidden="true"></span> Simplified landmass outline</li>
+            <li><span class="legend-shape" aria-hidden="true"></span> Simplified landmass outline (local vector basemap — MapLibre GL JS, vendored, no online tiles)</li>
           </ul>
         </div>
 
@@ -118,6 +123,7 @@
 
   <footer id="site-footer"></footer>
 
+  <script src="../assets/vendor/maplibre-gl/maplibre-gl.js"></script>
   <script type="module" src="../js/world-map.js"></script>
 </body>
 </html>
