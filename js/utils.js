@@ -633,7 +633,7 @@ export function searchAllUpgraded(query, data) {
   return results.slice(0, APP_CONFIG.searchResultLimit);
 }
 
-/* ---------- Ask AI Demo：规则式本地数据查询 ----------
+/* ---------- Ask AI：规则式实体解析（D1 前既有实现，保留供参考/回退） ----------
    说明：这是 Prototype 的规则式查询（关键词 + 本地 JSON），
    不连接任何真实 LLM / API。以下函数为纯函数，便于单元测试。 */
 
@@ -683,7 +683,7 @@ export function detectLibraryType(question) {
 }
 
 /**
- * Ask AI Demo 的规则式回答。
+ * Ask AI 的规则式回答（D1 前既有实现）。
  * @returns {{matched: boolean, intent: string, text: string, items: Array, sources: Array}}
  *   items：命中的 Library / Award / Case 条目（含 id / type / title / sub）
  */

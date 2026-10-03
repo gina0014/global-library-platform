@@ -13,7 +13,12 @@ import { APP_CONFIG } from "./config.js";
 import {
   loadAllCoreData,
   loadCountrySource,
-  loadAwardResultSource
+  loadLibrarySource,
+  loadAwardSource,
+  loadAwardResultSource,
+  loadCaseSource,
+  searchAll,
+  askPlatform
 } from "./data-loader.js";
 import {
   renderHeader,
@@ -24,14 +29,15 @@ import {
   loadingState,
   errorState
 } from "./components.js";
-import { escapeHtml, answerQuestion } from "./utils.js";
+import { escapeHtml, getQueryParam } from "./utils.js";
 
-/* 建议问题（与数据集实际内容匹配，保证 Demo 一定可运行） */
+/* 建议问题：全部落在平台数据可可靠回答的范围内（D1.5） */
 const SUGGESTED_QUESTIONS = [
-  { label: "Which libraries in the dataset have received international awards?", text: "Which libraries in the dataset have received international awards?" },
-  { label: "Show green library award cases.", text: "Show green library award cases." },
   { label: "Which libraries are located in Denmark?", text: "Which libraries are located in Denmark?" },
   { label: "Find public libraries in China.", text: "Find public libraries in China." },
+  { label: "Which awards has Shanghai Library won?", text: "Which awards has Shanghai Library won?" },
+  { label: "Which libraries have won IFLA Public Library of the Year?", text: "Which libraries have won IFLA Public Library of the Year?" },
+  { label: "Show green library award cases.", text: "Show green library award cases." },
   { label: "Show all cases and projects.", text: "Show all cases and projects." }
 ];
 
@@ -45,17 +51,28 @@ async function init() {
   document.getElementById("answer-section").hidden = false;
 
   try {
-    const [core, countrySource, awardResultSource] = await Promise.all([
-      loadAllCoreData(),
-      loadCountrySource(),
-      loadAwardResultSource()
-    ]);
-    pageData = { ...core, countrySource, awardResultSource };
+    const [core, countrySource, librarySource, awardSource, awardResultSource, caseSource] =
+      await Promise.all([
+        loadAllCoreData(),
+        loadCountrySource(),
+        loadLibrarySource(),
+        loadAwardSource(),
+        loadAwardResultSource(),
+        loadCaseSource()
+      ]);
+    pageData = { ...core, countrySource, librarySource, awardSource, awardResultSource, caseSource };
 
     document.getElementById("answer-section").hidden = true;
     answerBox.innerHTML = "";
     renderSuggestedQuestions();
     bindEvents();
+
+    // 支持 ?q=<question> 直达（与 search.html 一致，便于分享与自动化验收）
+    const preset = getQueryParam("q");
+    if (preset) {
+      document.getElementById("question").value = preset;
+      runQuestion(preset);
+    }
   } catch (err) {
     answerBox.innerHTML = errorState();
     document.getElementById("btn-retry").addEventListener("click", init);
@@ -98,7 +115,7 @@ function hideResults() {
   document.getElementById("answer-sources-wrap").hidden = true;
 }
 
-function runQuestion(question) {
+async function runQuestion(question) {
   const statusEl = document.getElementById("ask-status");
   const answerSection = document.getElementById("answer-section");
   const answerBox = document.getElementById("answer-box");
@@ -114,18 +131,24 @@ function runQuestion(question) {
   answerSection.hidden = false;
   hideResults();
 
-  const result = answerQuestion(text, pageData);
+  // D1：回答全部由 data-loader.askPlatform() 生成（数据接地，绝不自由生成）
+  let result;
+  try {
+    result = await askPlatform(text, pageData, q => searchAll(q, pageData));
+  } catch (err) {
+    answerBox.innerHTML = errorState();
+    document.getElementById("btn-retry").addEventListener("click", () => runQuestion(text));
+    return;
+  }
 
   if (!result.matched) {
-    // 无法理解的问题：只提示支持范围，不编造答案
+    // 数据不足以回答：明确说明，不编造（D1.5）
     answerBox.innerHTML = `
-      <p class="answer-text muted">
-        This prototype currently supports a limited set of data queries.
-        Please try one of the suggested questions below.
-      </p>
+      <p class="answer-text muted">${escapeHtml(result.text)}</p>
       <p class="caption" style="margin-top:8px">
-        Supported topics include: libraries by country, public / national / academic libraries,
-        award-winning libraries, the “Green Library” award category, and cases / projects.
+        Supported questions: libraries in a country · awards of a library · libraries holding an award ·
+        green / sustainability libraries · cases and projects · topical lookup across
+        Library / Award / Case / Source.
       </p>
       <p style="margin-top:12px">
         <a class="small" href="#suggested-questions">Back to Suggested Questions ↑</a>
@@ -133,10 +156,10 @@ function runQuestion(question) {
     return;
   }
 
-  // 标准回答：明确标注来源为本地 Demo 数据集
+  // 标准回答：标注答案由平台数据接地生成，未调用任何生成式模型
   answerBox.innerHTML = `
     <p class="answer-text">${escapeHtml(result.text)}</p>
-    <p class="answer-footnote">Demo answer generated from the local prototype dataset. No AI model or external API was called.</p>`;
+    <p class="answer-footnote">Answer composed from the platform dataset (Dynamic MVP). Every record and source listed below is retrieved from platform data — no language model was called and no fact was generated.</p>`;
 
   if (result.items.length > 0) {
     const wrap = document.getElementById("answer-results-wrap");
@@ -165,6 +188,6 @@ renderHeader("ask-ai");
 renderFooter();
 document.getElementById("breadcrumb").innerHTML = breadcrumb([
   { label: "Home", href: "index.html" },
-  { label: "Ask AI (Demo)" }
+  { label: "Ask AI" }
 ]);
 init();

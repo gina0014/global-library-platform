@@ -53,6 +53,24 @@ const browser = spawn(
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/* ---------------------------------------------------------------
+   超时护栏（后加的硬性要求）
+
+   不设超时时，任一 await 没有对端响应就会让整个验收永久挂起：
+     - openTab 的 PUT fetch 没有超时；
+     - cdp.send() 的 Promise 只在对端回消息时 resolve，
+       而 Runtime.evaluate 带 awaitPromise —— 页面里的数据加载一旦卡住，
+       这个 Promise 永远不 settle，Python 侧的 subprocess.run 就永久阻塞。
+   因此：每个 await 都包一层 withTimeout，并额外加一个全局看门狗兜底。
+   --------------------------------------------------------------- */
+function withTimeout(promise, ms, label) {
+  let timer;
+  const guard = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`timeout(${ms}ms) ${label}`)), ms);
+  });
+  return Promise.race([promise, guard]).finally(() => clearTimeout(timer));
+}
+
 async function waitForDevtools(timeout = 30000) {
   const started = Date.now();
   while (Date.now() - started < timeout) {
@@ -113,65 +131,80 @@ const DEFAULT_EXPR = `
   })()
 `;
 
+async function runTask(t) {
+  let text = "";
+  const errors = [];
+  let tabId = null;
+  let ws = null;
+  try {
+    const tab = await withTimeout(openTab(t.url), 15000, "openTab");
+    tabId = tab.id;
+    ws = new WebSocket(tab.webSocketDebuggerUrl);
+    await new Promise((res, rej) => {
+      ws.addEventListener("open", res, { once: true });
+      ws.addEventListener("error", rej, { once: true });
+      setTimeout(() => rej(new Error("ws timeout")), 10000);
+    });
+    const cdp = new Cdp(ws);
+    ws.addEventListener("message", (ev) => {
+      const m = JSON.parse(ev.data);
+      if (m.method === "Runtime.exceptionThrown") errors.push(JSON.stringify(m.params).slice(0, 300));
+      if (m.method === "Log.entryAdded" && ["error", "warning"].includes(m.params.entry?.level)) {
+        errors.push(m.params.entry?.text);
+      }
+    });
+    await withTimeout(cdp.send("Runtime.enable"), 10000, "Runtime.enable");
+    if (t.width && t.height) {
+      await withTimeout(cdp.send("Emulation.setDeviceMetricsOverride", {
+        width: t.width,
+        height: t.height,
+        deviceScaleFactor: 1,
+        mobile: t.width < 700,
+      }), 10000, "setDeviceMetricsOverride");
+    }
+    await sleep(t.wait || 4500);
+    if (t.clickSelector) {
+      // 点击可能触发导航并销毁当前执行上下文：这里不等待，错误也忽略，
+      // 随后在同一个 CDP 会话里读取**新文档**的状态。
+      try {
+        await withTimeout(cdp.send("Runtime.evaluate", {
+          expression: `(document.querySelector(${JSON.stringify(t.clickSelector)}) || { click(){} }).click()`,
+          returnByValue: true,
+        }), 15000, "click");
+      } catch {
+        /* 导航导致上下文销毁，属预期 */
+      }
+      await sleep(t.waitAfterClick || 3000);
+    }
+    const res = await withTimeout(cdp.send("Runtime.evaluate", {
+      expression: t.expr || DEFAULT_EXPR,
+      awaitPromise: true,
+      returnByValue: true,
+    }), t.exprTimeout || 40000, "Runtime.evaluate");
+    const value = res.result?.value ?? "";
+    text = typeof value === "string" ? value.trim() : JSON.stringify(value);
+  } catch (e) {
+    errors.push("[harness] " + e.message);
+  } finally {
+    try {
+      if (ws) ws.close();
+    } catch {
+      /* ignore */
+    }
+    if (tabId) await closeTab(tabId);
+  }
+  return { text, errors };
+}
+
 async function run() {
   await waitForDevtools();
   for (const t of tasks) {
-    let text = "";
-    let errors = [];
-    let tabId = null;
-    try {
-      const tab = await openTab(t.url);
-      tabId = tab.id;
-      const ws = new WebSocket(tab.webSocketDebuggerUrl);
-      await new Promise((res, rej) => {
-        ws.addEventListener("open", res, { once: true });
-        ws.addEventListener("error", rej, { once: true });
-        setTimeout(() => rej(new Error("ws timeout")), 10000);
-      });
-      const cdp = new Cdp(ws);
-      ws.addEventListener("message", (ev) => {
-        const m = JSON.parse(ev.data);
-        if (m.method === "Runtime.exceptionThrown") errors.push(JSON.stringify(m.params).slice(0, 300));
-        if (m.method === "Log.entryAdded" && ["error", "warning"].includes(m.params.entry?.level)) {
-          errors.push(m.params.entry?.text);
-        }
-      });
-      await cdp.send("Runtime.enable");
-      if (t.width && t.height) {
-        await cdp.send("Emulation.setDeviceMetricsOverride", {
-          width: t.width,
-          height: t.height,
-          deviceScaleFactor: 1,
-          mobile: t.width < 700,
-        });
-      }
-      await sleep(t.wait || 4500);
-      if (t.clickSelector) {
-        // 点击可能触发导航并销毁当前执行上下文：这里不等待，错误也忽略，
-        // 随后在同一个 CDP 会话里读取**新文档**的状态。
-        try {
-          await cdp.send("Runtime.evaluate", {
-            expression: `(document.querySelector(${JSON.stringify(t.clickSelector)}) || { click(){} }).click()`,
-            returnByValue: true,
-          });
-        } catch {
-          /* 导航导致上下文销毁，属预期 */
-        }
-        await sleep(t.waitAfterClick || 3000);
-      }
-      const res = await cdp.send("Runtime.evaluate", {
-        expression: t.expr || DEFAULT_EXPR,
-        awaitPromise: true,
-        returnByValue: true,
-      });
-      const value = res.result?.value ?? "";
-      text = typeof value === "string" ? value.trim() : JSON.stringify(value);
-      ws.close();
-    } catch (e) {
-      errors.push("[harness] " + e.message);
-    } finally {
-      if (tabId) await closeTab(tabId);
-    }
+    // 单任务再包一层：即使上面的分段超时都没生效，也不会拖垮整批
+    const { text, errors } = await withTimeout(
+      runTask(t),
+      t.taskTimeout || 90000,
+      `task ${t.tag}`
+    ).catch((e) => ({ text: "", errors: ["[harness] " + e.message] }));
     fs.writeFileSync(
       path.join(outDir, `${t.tag}.txt`),
       (text + (errors.length ? "\n\nCONSOLE_ERRORS=" + JSON.stringify(errors.slice(0, 5)) : "")).trim(),
@@ -181,9 +214,24 @@ async function run() {
   }
 }
 
+// 全局看门狗：任何分段超时都失效时，仍保证进程在有限时间内退出，
+// 绝不让调用方（Python subprocess.run / CI）无限等待。
+const watchdog = setTimeout(() => {
+  console.error(`[FATAL] global watchdog 触发（${tasks.length} 项任务超时上限耗尽）`);
+  process.exit(2);
+}, tasks.length * 120000);
+watchdog.unref?.();
+
 run()
   .catch((e) => {
     console.error("[FATAL]", e.message);
     process.exitCode = 1;
   })
-  .finally(() => browser.kill());
+  .finally(() => {
+    clearTimeout(watchdog);
+    browser.kill();
+    // 必须显式退出：CDP WebSocket / DevTools fetch 的 keep-alive 会让事件循环非空，
+    // node 不会自行结束。否则调用方（Python subprocess.run）会永久阻塞，
+    // 并残留一个占着 9222 端口的僵尸实例，让下一次浏览器验收直接挂死。
+    process.exit(process.exitCode ?? 0);
+  });

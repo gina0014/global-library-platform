@@ -167,7 +167,7 @@ function render(el, data) {
         <ul class="content-list">
           <li>This website is a <b>front-end prototype</b>: HTML, CSS and JavaScript only.</li>
           <li>It reads a validated static JSON dataset — there is no database connection and no backend service.</li>
-          <li>Ask AI is a scripted demonstration of the intended interface, not a live AI system.</li>
+          <li>Ask AI resolves questions against the platform dataset and composes answers from real records and sources; no generative language model is called.</li>
           <li>The Admin Dashboard is a user-interface prototype: editing, reviewing and publishing are not enabled.</li>
           <li>Illustrative demo content is clearly labelled wherever it appears.</li>
         </ul>

@@ -168,11 +168,11 @@ function renderPage(data) {
       </div>
     </section>
 
-    <!-- Ask AI 入口（Prototype，不连接任何真实 AI 服务） -->
+    <!-- Ask AI 入口（D1：答案由平台数据接地生成） -->
     <section class="section" aria-labelledby="askai-heading">
       <div class="card ask-ai-entry">
         <div>
-          <h2 id="askai-heading" style="font-size:20px">Ask AI<span class="ai-badge">AI Demo / Prototype</span></h2>
+          <h2 id="askai-heading" style="font-size:20px">Ask AI<span class="ai-badge">Data-grounded</span></h2>
           <p class="muted small" style="margin-top:6px">Explore the knowledge base using natural language.</p>
         </div>
         <a class="btn btn-primary" href="${withBase(APP_CONFIG.pages.askAi)}">Try Ask AI</a>
