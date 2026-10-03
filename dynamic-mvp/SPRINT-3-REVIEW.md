@@ -67,7 +67,7 @@
 | 9 | backup / restore | 无任何备份脚本或恢复演练 | **BLOCKER** |
 | 10 | database persistence | Docker named volume `postgres-data`；容器级持久化，无异地/离线备份 | NEEDS CONFIGURATION |
 | 11 | Directus version | 11.17.4（PostgreSQL 16.15）；无 pinned digest，无升级策略 | NEEDS CONFIGURATION |
-| 12 | domain / frontend hosting | 当前静态站由 `python -m http.server` 提供；仓库含 `.nojekyll`，可作静态托管 | NEEDS CONFIGURATION |
+| 12 | domain / frontend hosting | 仓库**已开启 GitHub Pages（source = `main`）**，<br>公网地址 `https://gina0014.github.io/global-library-platform/` 已 built 且可访问；<br>本地另有 `python -m http.server` | **BLOCKER**（见 §4.1：公网构建当前不可用） |
 | 13 | GitHub Actions | 本轮新增 Quality Gate（仅 PR/主分支静态与数据库检查），未接分支保护 | NEEDS CONFIGURATION（需设为 required check） |
 | 14 | production permissions | Directus Roles / Policies / Permissions 由 `step5_setup_workflow.py` **幂等**创建，可复现 | READY（机制可复现；需在目标环境执行并复核） |
 | 15 | rate limiting | Directus 未启用任何限流；无网关层 | **NEEDS CONFIGURATION**（公开读接口建议至少加缓存/限流） |
@@ -77,10 +77,39 @@
 | 19 | migration procedure | `db/ddl/01…05` 按序全量可应用，`db/seed/generate-seed.py` 可重建种子；CI 每轮从零验证 | **READY** |
 | 20 | rollback procedure | 无版本化回滚脚本、无演练；仅有"重建"路径 | **BLOCKER** |
 
-**分项统计**：READY 2 · NEEDS CONFIGURATION 10 · BLOCKER 8 · OPTIONAL 0。
+**分项统计**：READY 2 · NEEDS CONFIGURATION 9 · BLOCKER 9 · OPTIONAL 0。
 
-**说明**：不要把 "Local MVP Ready" 写成 "Production Ready"。本表第 1/2/3/5/8/9/20 项在
+**说明**：不要把 "Local MVP Ready" 写成 "Production Ready"。本表第 1/2/3/5/8/9/12/20 项在
 进入任何公网环境前必须解决；其余为配置类工作，可在确定托管方案时一并完成。
+
+---
+
+### 4.1 既有公网构建的真实状态（本轮核查发现，必须披露）
+
+核查 GitHub API 得到两项事实：
+
+1. **仓库已开启 GitHub Pages，`source = main`，状态 `built`**，公网地址
+   `https://gina0014.github.io/global-library-platform/` 已在线。这不是本轮新增的部署动作，
+   而是 Stage 8 起就存在的仓库配置——**但本轮向 `main` 的每次推送都会触发一次公网重新部署**
+   （本轮共触发 4 次 `pages build and deployment`）。
+2. **该公网构建当前是"空壳"**：`js/data-loader.js` 中
+   `DATA_SOURCE_MODE = "api"`、`API_DATASOURCE.baseUrl = "http://localhost:8055"`，
+   且**不存在运行时回退**（API 失败直接抛 `DataLoadError`，不会自动改用 `data/*.json`）。
+   因此公网访客打开任何数据页（图书馆 / 奖项 / 案例 / 检索 / Ask AI）都会落到错误态。
+
+| 影响面 | 结论 |
+|---|---|
+| 泄露风险 | **无**。公网内容只有静态前端代码；不含 admin token、不含 LLM key、不含 `.env`、不含数据库 |
+| 数据正确性风险 | **无**。公网侧拿不到任何数据，不会展示 draft / pending |
+| 体验风险 | **有**。公网可访问的站点目前所有数据页不可用 |
+
+**建议（供人工决策，不在本轮执行）**：二选一 ——
+
+- (a) 在公开演示场景下把 `DATA_SOURCE_MODE` 切回 `"json"`，让公网构建退化为纯静态原型（Stage 8 冻结产物），
+  与 "Dynamic MVP" 解耦；或
+- (b) 关闭 GitHub Pages，等 PostgreSQL / Directus 托管与 HTTPS 就位后再统一对外发布。
+
+本轮**未新增任何部署动作、未改 Pages 配置、未改动 `DATA_SOURCE_MODE`**——此处仅如实记录既有事实。
 
 ---
 
@@ -146,7 +175,11 @@ TOTAL=63  PASS=63  FAIL=0   （exit=0）
 3. 检索与问答均为子串匹配（`ILIKE`），不做分词与相关性排序。
 4. 国家别名表仍是前端常量，不在数据库中。
 5. 无 URL 的 Source（62 / 63 离线汇编文档）无法在线溯源，只能按题名识别。
-6. 生产就绪尚缺 8 项 BLOCKER（见 §4），**未部署**。
+6. 生产就绪尚缺 9 项 BLOCKER（见 §4）。
+7. `DATA_SOURCE_MODE` 是**编译期常量**，无运行时回退：API 不可达时页面直接进错误态，
+   公网构建因此不可用（见 §4.1）。做成可注入配置属生产化工作，不在本轮范围。
+8. 仓库 GitHub Pages 已开启在 `main`：本轮向 `main` 的推送会触发公网重新部署（既有配置，
+   非本轮新增）。公网侧仅静态代码，不含任何密钥或数据。
 
 ---
 
@@ -156,11 +189,14 @@ TOTAL=63  PASS=63  FAIL=0   （exit=0）
 |---|---|---|---|
 | `bc4ef63` | `fd3b4b8` | `feat: ground ask ai in dynamic platform data`（12 files） | #6 |
 | `9c28ab7` | `b07d253` | `ci: add automated quality gate`（4 files） | #6 |
-| — | `3aee9c7` | merge commit（Sprint 3 合入 `main`） | #6 |
+| `a025476` | `10f1eb5` | `docs: add sprint 3 review and production readiness audit`（1 file） | #7 |
+| — | `3aee9c7` | merge commit（D1 + D2 合入 `main`） | #6 |
+| — | `2f669dd` | merge commit（Sprint 3 收尾文档合入 `main`） | #7 |
 
-- 两个 commit 独立可追溯，均经 `merge`（非 squash），**无 force push**。
-- PR #6 diff 共 16 个文件，**无 `data/*.json`、无 `.env`、无预期外文件**。
-- `main` 现有：B2 `d05c70e` → B3 `0608efd` → C1 `f5cf9e7` → C2 `26af146` → D1 `fd3b4b8` → D2 `b07d253` → merge `3aee9c7`。
+- 三个 commit 独立可追溯，均经 `merge`（非 squash），**无 force push**。
+- PR #6 diff 共 16 个文件、PR #7 diff 共 1 个文件，**均无 `data/*.json`、无 `.env`、无预期外文件**。
+- `main` 现有：B2 `d05c70e` → B3 `0608efd` → C1 `f5cf9e7` → C2 `26af146` → D1 `fd3b4b8` → D2 `b07d253`
+  → merge `3aee9c7` → docs `10f1eb5` → merge `2f669dd`。
 
 ### 8.1 GitHub Actions 实际执行结果
 
@@ -168,9 +204,11 @@ TOTAL=63  PASS=63  FAIL=0   （exit=0）
 |---|---|---|
 | #1 | `pull_request`（`feature-ask-ai-dynamic`） | **success** |
 | #2 | `push`（`main` @ `3aee9c7`） | **success** |
+| #3 | `pull_request`（`feature-sprint3-review`） | **success** |
+| #4 | `push`（`main` @ `2f669dd`） | **success** |
 
-两个 job（Static quality gate / Database quality gate）在 GitHub runner 上均为 `success`，
-包含 `Run static checks`、`Wait for PostgreSQL`、`Run database checks` 步骤。
+run #4 两个 job（Static quality gate / Database quality gate）在 GitHub runner 上均为 `success`，
+步骤级结果：`Run static checks` success、`Wait for PostgreSQL` success、`Run database checks` success。
 
 ---
 
@@ -184,14 +222,18 @@ TOTAL=63  PASS=63  FAIL=0   （exit=0）
 2. D1 验收 **63/63**，含 B2/B3/C1/C2 全量回归；
 3. D2 验收 AC1–AC7 全通过，且 GitHub Actions 在远端实跑两次均 success；
 4. 未触发任何 STOP CONDITION：无需编造事实、provenance 可保证、无 draft/pending 泄露、
-   无 secret 进前端、CI 不改生产数据、CI 不自动公开部署、未破坏 Stage 1–10 冻结产物、
-   未引入 Vector DB / LLM 基础设施；
-5. 本轮**未做任何部署动作**。
+   无 secret 进前端、CI 不改生产数据、**新增的 Quality Gate 不含 deploy job**（不自动公开部署）、
+   未破坏 Stage 1–10 冻结产物、未引入 Vector DB / LLM 基础设施；
+5. 本轮**未新增任何部署动作、未改 Pages 配置、未改动 `DATA_SOURCE_MODE`**。
 
 **下一步唯一待决事项：Production Deployment（人工决策）。**
 
-生产就绪审计见 §4：8 项 BLOCKER 未解决
+生产就绪审计见 §4：9 项 BLOCKER 未解决
 （PostgreSQL / Directus 托管、`API baseUrl` 写死 localhost、HTTPS、管理员凭据、
-备份与恢复、回滚流程，以及 CORS / 环境变量 / 密钥管理 / 持久化等 10 项待配置）。
-当前状态是 **Local MVP Ready，不是 Production Ready**——在人类决定托管方案与部署窗口之前，
-不应把它推到公网。
+备份与恢复、**公网前端构建当前不可用**、回滚流程，以及 CORS / 环境变量 / 密钥管理 /
+持久化等 9 项待配置）。
+当前状态是 **Local MVP Ready，不是 Production Ready**。
+
+此外请一并裁决 §4.1 的既有事实：仓库 GitHub Pages 已开启在 `main`，公网站点已在线但所有
+数据页不可用。建议在 (a) 公开演示场景切回 JSON 模式 与 (b) 关闭 Pages 待托管就位后发布
+之间做出选择——**在人类决定之前，不应把它当作可用的公网产品**。
