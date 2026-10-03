@@ -34,8 +34,10 @@ import {
   getCountryName
 } from "./utils.js";
 import { baseMapSvg, project, MAP_WIDTH, MAP_HEIGHT } from "./map-svg.js";
+import { initDynamicMap } from "./map-dynamic.js";
 
 let allData = null; // { countries, libraries, awardResults }（published 过滤后）
+let glMap = null;   // MapLibre 句柄；WebGL 不可用时为 null → 走既有 SVG 地图
 
 /* ---------- 状态 ---------- */
 
@@ -75,7 +77,26 @@ async function init() {
       awardResults: getPublished(awardResults)
     };
 
-    document.getElementById("map-canvas").innerHTML = baseMapSvg();
+    // 主视图：MapLibre 动态地图（离线底图 + 动态 marker）。
+    // 失败或 WebGL 不可用时 glMap 为 null，自动回退到既有本地 SVG 地图，不抛错。
+    glMap = initDynamicMap({
+      container: document.getElementById("map-gl"),
+      onSelectCountry: (c) => {
+        const libsInCountry = allData.libraries.filter(l => l.country_id === c.country_id);
+        const libIds = new Set(libsInCountry.map(l => l.library_id));
+        updateSelectedCountry(c, libsInCountry.length,
+          awardCountForCountry(c.country_id, allData.awardResults, libIds));
+      }
+    });
+    if (glMap) {
+      const svgCanvas = document.getElementById("map-canvas");
+      svgCanvas.hidden = true;          // SVG 仅作降级视图，保留 DOM 但不渲染
+      document.getElementById("map-gl").hidden = false;
+      document.body.dataset.mapEngine = "maplibre";
+    } else {
+      document.getElementById("map-canvas").innerHTML = baseMapSvg();
+      document.body.dataset.mapEngine = "svg";
+    }
     buildFilterOptions();
     bindEvents();
     render();
@@ -136,6 +157,16 @@ function awardCountForCountry(countryId, awardResults, libraryIdsInCountry) {
 /* ---------- 地图 Marker ---------- */
 
 function renderMarkers(filteredLibraries, countries, awardResults) {
+  // C1：MapLibre 可用时由动态地图渲染 marker（数据仍是同一份 data-loader 数据）
+  if (glMap) {
+    const filteredCountryIds = new Set(filteredLibraries.map(l => l.country_id));
+    glMap.setData({
+      libraries: filteredLibraries,
+      countries: countries.filter(c => filteredCountryIds.has(c.country_id))
+    });
+    return;
+  }
+
   const markersLayer = document.getElementById("map-markers");
   if (!markersLayer) return;
 

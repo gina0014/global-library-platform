@@ -1,0 +1,83 @@
+/* ============================================================
+   map-gl.css — C1 Dynamic Map（MapLibre 展示层样式）
+
+   只新增地图所需的样式，沿用 Design System 既有变量，
+   不改动 reset / layout / components / pages 任何既有规则。
+   ============================================================ */
+
+.map-gl {
+  height: 520px;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background: #eaf2f8;
+}
+
+/* MapLibre 自带控件的视觉收敛（不使用在线瓦片，因此隐藏缩放控件的默认外框阴影即可） */
+.map-gl .maplibregl-ctrl-attrib,
+.map-gl .maplibregl-ctrl-logo {
+  display: none !important;
+}
+
+/* Marker：国家 / 图书馆两种语义，与 SVG 版图例保持同一配色 */
+.glp-marker {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+}
+
+.glp-marker-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(29, 78, 137, 0.18);
+  flex: 0 0 auto;
+}
+
+.glp-marker.glp-marker-library .glp-marker-dot {
+  width: 11px;
+  height: 11px;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 4px rgba(176, 138, 46, 0.2);
+}
+
+.glp-marker-label {
+  font-family: var(--font-family);
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.86);
+  padding: 1px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.glp-marker:hover .glp-marker-dot,
+.glp-marker:focus .glp-marker-dot {
+  background: var(--color-primary-dark);
+  box-shadow: 0 0 0 6px rgba(29, 78, 137, 0.28);
+}
+
+.glp-marker.glp-marker-library:hover .glp-marker-dot,
+.glp-marker.glp-marker-library:focus .glp-marker-dot {
+  background: #8d6f24;
+  box-shadow: 0 0 0 6px rgba(176, 138, 46, 0.32);
+}
+
+.glp-marker:focus .glp-marker-label {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+/* 响应式：与既有 responsive.css 的断点保持一致 */
+@media (max-width: 900px) {
+  .map-gl { height: 420px; }
+}
+
+@media (max-width: 600px) {
+  .map-gl { height: 340px; }
+  .glp-marker-label { font-size: 10px; }
+}
