@@ -6,7 +6,29 @@
 >
 > 图例：`PASS` 已满足 · `PENDING` 待托管环境就位后配置 · `BLOCKED` 缺资源或需人工决策
 
-最后更新：2026-10-03（PHASE 1 完成时）
+最后更新：2026-10-03（PHASE 1 上线并实测后）
+
+---
+
+## 上线证据（PHASE 1 实测，非本地模拟）
+
+| 项 | 值 |
+|---|---|
+| 公网 URL | `https://gina0014.github.io/global-library-platform/` |
+| Pages 来源 | `main` @ `/`，build_type `legacy` |
+| 构建状态 | `built`，构建 sha `d7810bb75dfc0c9bb2a81fedc8d608d7f8089d58` |
+| 合并 PR | `#10 feature-production-config → main`（merge commit `d7810bb`） |
+| 变更提交 | `286ac346f15e8418326cc0362335d0fb43392e84` |
+| Quality Gate | `Static quality gate` = success，`Database quality gate` = success |
+| 公网实测 | `step12_verify_public_demo.py --base https://gina0014.github.io/global-library-platform` → **TOTAL=112 PASS=112 FAIL=0（PUBLIC DEMO OK）** |
+| 页面覆盖 | Home / Libraries / Library Profile / Countries / Awards / Award Profile / Cases / Case Detail / World Map / Search / Ask AI / About（12 页） |
+| 数据源实测 | 12/12 页面 `mode=json id=public-static-demo` |
+| 内网请求 | 12/12 页面跨源 localhost / 内网请求 = `[]`，`:8055` 请求 = `[]` |
+| Mixed content | 12/12 页面无 `http://` 子资源 |
+| Console | 12/12 页面无 serious error |
+| Secret 泄漏 | 12/12 页面渲染文本无 secret 特征 |
+
+> 该证据为**上线后**在真实公网 URL 上跑出，不是本地 `?datasource=json` 模拟结果。
 
 ---
 
@@ -14,10 +36,10 @@
 
 | # | 检查项 | 状态 | 依据 |
 |---|---|---|---|
-| F1 | 页面全部可访问（Home / Libraries / Library / Country / Awards / Award / Cases / Case / Map / Search / Ask AI / About） | **PASS** | step12 本地整模拟 + 公网实测（见 SPRINT-3 Phase 1 记录） |
-| F2 | 公网构建数据源为 JSON 且不请求任何内网地址 | **PASS** | step12："数据源为 json 模式" 12/12、"无跨源 localhost 请求" 12/12 |
-| F3 | 数据源不再硬编码 `localhost` | **PASS** | `verify_datasource_config.mjs` + CI static 新增检查 |
-| F4 | HTTPS 页面无 mixed content | **PASS**（静态资源全同源 HTTPS） | step12 第 5 组断言 |
+| F1 | 页面全部可访问（Home / Libraries / Library / Country / Awards / Award / Cases / Case / Map / Search / Ask AI / About） | **PASS** | 公网实测 12/12 页面渲染出真实内容（1356–6535 chars） |
+| F2 | 公网构建数据源为 JSON 且不请求任何内网地址 | **PASS** | 公网实测："数据源为 json 模式" 12/12、"无跨源 localhost 请求" 12/12、"未请求 :8055" 12/12 |
+| F3 | 数据源不再硬编码 `localhost` | **PASS** | `verify_datasource_config.mjs` 16/16 + CI static 新增检查（50/50） |
+| F4 | HTTPS 页面无 mixed content | **PASS**（静态资源全同源 HTTPS） | 公网实测 12/12 页面无 `http://` 子资源 |
 | F5 | 未把 `?datasource=` 之类的调试参数持久化 | **PASS** | 覆写仅当次加载生效，不写 localStorage |
 | F6 | Static Public Demo ≠ Dynamic MVP 已在文档中明示 | **PASS** | `IMPLEMENTATION-008.md` §4 |
 | F7 | 自定义安全响应头（CSP / HSTS） | **BLOCKED** | GitHub Pages 平台限制，不可改；需换 CDN 才有 —— 建议接受，不为此复杂化架构 |
@@ -101,7 +123,7 @@
 | L3 | Quality Gate 存在并跑绿 | **PASS** | GitHub Actions：static 50/50、db 20/20，远端多次 success |
 | L4 | Quality Gate 设为 required checks | **PENDING** | 需仓库管理员在 Settings 操作（不得绕过人审） |
 | L5 | 禁止直接 push main | **PENDING** | 建议 ruleset 勾选 Block direct pushes |
-| L6 | 全量回归脚本可用 | **PASS** | step3 128 / step6 53 / step8 20 / step10 56 / step11 63 / step12 100 |
+| L6 | 全量回归脚本可用 | **PASS** | step3 128 / step6 53 / step8 20 / step10 56 / step11 63 / step12 100（本地模拟）· step12 112（公网实测） |
 
 ---
 
@@ -109,7 +131,7 @@
 
 | # | 检查项 | 状态 | 依据 |
 |---|---|---|---|
-| E1 | PHASE 1 Public Demo 已上线且可用 | **PASS** | 公网实测（本次交付后执行） |
+| E1 | PHASE 1 Public Demo 已上线且可用 | **PASS** | 公网实测 `https://gina0014.github.io/global-library-platform/` → 112/112；Pages build `built` @ `d7810bb` |
 | E2 | PHASE 2 动态生产栈已部署 | **BLOCKED** | 等待人工选择 Hosting Option |
 | E3 | 生产数据迁移已完成 | **BLOCKED** | 同上 |
 | E4 | 部署后页面级回归（真机） | **PENDING** | 部署后用 `step12 --base <production>` 复跑 |
