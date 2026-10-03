@@ -122,14 +122,15 @@ def ac2_restore():
 
 def main():
     EVIDENCE.mkdir(parents=True, exist_ok=True)
-    loader_md5_before = md5(LOADER)
     libs_md5_before = md5(DATA / "libraries.json")
     libs_mtime_before = (DATA / "libraries.json").stat().st_mtime
 
-    # 无论上一轮是否异常中断，开始前强制复位为 api 模式
+    # 无论上一轮是否异常中断，开始前强制复位为 api 模式；
+    # 基线 md5 必须在复位之后取，否则上一轮残留会让本项永远失败。
     set_mode("api")
     if current_mode() != "api":
         raise SystemExit("[FATAL] 起始模式不是 api")
+    loader_md5_before = md5(LOADER)
 
     # ---------- 阶段 A：api 模式（AC6 基线 / AC3 / 回归 / AC2 前基线） ----------
     print("\n== 阶段 A：api 模式 ==", flush=True)
