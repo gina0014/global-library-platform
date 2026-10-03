@@ -291,6 +291,21 @@ export async function searchAll(query, jsonData) {
 }
 
 /**
+ * Ask AI 入口（D1）。页面只调这一个函数，不感知回答在哪里生成：
+ *   - 两种模式下都用同一个接地引擎（js/ask-ai-adapter.js），
+ *     输入的 data 全部来自本模块（api 模式 = API 数据，json 模式 = JSON fallback）；
+ *   - 主题兜底检索借用 searchAll()，与 C2 共用同一条检索通路，不另建一套。
+ * @param {string} question 用户问题
+ * @param {Object} data 已通过本模块加载的平台数据
+ * @param {Function} [searchFn] 主题兜底检索（页面传入 searchAll 的偏应用形式）
+ * @returns {Promise<{matched:boolean,intent:string,text:string,items:Array,sources:Array}>}
+ */
+export async function askPlatform(question, data, searchFn) {
+  const { answerFromPlatform } = await import("./ask-ai-adapter.js");
+  return answerFromPlatform(question, data, searchFn);
+}
+
+/**
  * 过滤出已发布记录（前台只显示 status === "published"）。
  * @param {Array} records 任意核心对象的记录数组
  * @returns {Array}

@@ -108,7 +108,7 @@ export function renderFooter() {
       <div>
         <b style="color:#fff">Prototype</b>
         <p class="small" style="margin-top:8px">
-          <a href="${withBase(APP_CONFIG.pages.askAi)}">Ask AI (Demo)</a><br>
+          <a href="${withBase(APP_CONFIG.pages.askAi)}">Ask AI</a><br>
           <a href="${withBase(APP_CONFIG.pages.admin)}">Admin Dashboard (Prototype)</a><br>
           <a href="${withBase(APP_CONFIG.pages.search)}">Global Search</a>
         </p>
@@ -325,11 +325,16 @@ export function sourceItem(entry) {
     `Accessed: ${source.accessed_date || "—"}`
   ].filter(Boolean);
 
+  // 无 URL 的来源（如离线汇编文档）：不渲染空链接，也不编造 URL（D1.4）
+  const link = source.url
+    ? `<a class="small" href="${escapeHtml(source.url)}" target="_blank" rel="noopener noreferrer">Visit Source →</a>`
+    : `<span class="small muted">No public URL — offline document held in the dataset</span>`;
+
   return `
   <div class="source-item">
     <div class="s-name">${escapeHtml(source.source_name)} ${relationTag}</div>
     <div class="s-meta">${escapeHtml(source.title ? `“${source.title}”` : "")} · ${escapeHtml(metaParts.join(" · "))}</div>
-    <a class="small" href="${escapeHtml(source.url)}" target="_blank" rel="noopener noreferrer">Visit Source →</a>
+    ${link}
   </div>`;
 }
 

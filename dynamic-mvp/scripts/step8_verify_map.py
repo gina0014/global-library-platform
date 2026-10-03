@@ -137,6 +137,28 @@ def main():
 
     fixture_id = None
 
+    def purge_fixtures():
+        """清掉任何遗留夹具（上一轮被中断时会留下）。
+
+        夹具只在验收期间存在，且名字唯一；残留会污染计数类断言
+        （library 总数 / published 数 / 有坐标数），必须在开始前清干净。
+        """
+        try:
+            rows = dapi.get(
+                f"/items/library?filter[name][_eq]={FIXTURE_NAME}&fields=library_id",
+                admin)["data"]
+        except Exception:
+            return
+        for r in rows:
+            try:
+                dapi.req("DELETE", f"/items/library/{r['library_id']}", admin)
+            except Exception:
+                pass
+        if rows:
+            print(f"[ENV] 清理遗留夹具 {len(rows)} 条", flush=True)
+
+    purge_fixtures()
+
     def create_fixture():
         payload = {
             "name": FIXTURE_NAME,
