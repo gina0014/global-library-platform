@@ -26,6 +26,10 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import dapi  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+
+# --no-nested：顶层驱动（step10 / step11）跑全套时传入，
+# 禁止本套件再往下嵌套调用其它套件，避免浏览器回归被重复执行。
+NESTED_OFF = "--no-nested" in sys.argv
 SCRIPTS = ROOT / "dynamic-mvp" / "scripts"
 EVIDENCE = ROOT / "dynamic-mvp" / "evidence"
 DATA = ROOT / "data"
@@ -276,16 +280,24 @@ def main():
         print("\n[cleanup] 测试夹具已删除", flush=True)
 
     # ================= C1-AC7：B2 / B3 核心回归 =================
+    # 顶层驱动（step10 / step11）跑全套时会带 --no-nested：
+    # 每个套件只被完整执行一次，避免 step11→step10→step8→step3/step6 的
+    # 三层嵌套把同几套浏览器回归重复跑 6 遍（曾经一次验收要 1.5 小时且会把 Edge 跑挂）。
     print("\n== C1-AC7：B2 / B3 核心回归 ==", flush=True)
-    p3 = subprocess.run([PYTHON, "-u", "step3_verify_data.py"], cwd=SCRIPTS,
-                        capture_output=True, text=True, encoding="utf-8", errors="replace")
-    tail3 = [l for l in (p3.stdout or "").splitlines() if l.startswith(("TOTAL=", "FAILED"))]
-    check("C1-AC7：step3（数据 / API 层）全部 PASS", p3.returncode == 0, (tail3[-1] if tail3 else "")[:200])
+    if NESTED_OFF:
+        print("[skip] --no-nested：由顶层驱动统一执行回归", flush=True)
+    else:
+        p3 = subprocess.run([PYTHON, "-u", "step3_verify_data.py"], cwd=SCRIPTS,
+                            capture_output=True, text=True, encoding="utf-8", errors="replace")
+        tail3 = [l for l in (p3.stdout or "").splitlines() if l.startswith(("TOTAL=", "FAILED"))]
+        check("C1-AC7：step3（数据 / API 层）全部 PASS", p3.returncode == 0,
+              (tail3[-1] if tail3 else "")[:200])
 
-    p6 = subprocess.run([PYTHON, "-u", "step6_verify_workflow.py"], cwd=SCRIPTS,
-                        capture_output=True, text=True, encoding="utf-8", errors="replace")
-    tail6 = [l for l in (p6.stdout or "").splitlines() if l.startswith(("TOTAL=", "FAILED"))]
-    check("C1-AC7：step6（B3 工作流）全部 PASS", p6.returncode == 0, (tail6[-1] if tail6 else "")[:200])
+        p6 = subprocess.run([PYTHON, "-u", "step6_verify_workflow.py"], cwd=SCRIPTS,
+                            capture_output=True, text=True, encoding="utf-8", errors="replace")
+        tail6 = [l for l in (p6.stdout or "").splitlines() if l.startswith(("TOTAL=", "FAILED"))]
+        check("C1-AC7：step6（B3 工作流）全部 PASS", p6.returncode == 0,
+              (tail6[-1] if tail6 else "")[:200])
 
     print("\n== 汇总 ==", flush=True)
     failed = [n for n, ok, _ in results if not ok]

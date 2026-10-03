@@ -69,19 +69,14 @@ def strip_comments(src):
 
 
 def current_mode():
-    m = re.search(r'const DATA_SOURCE_MODE = "(api|json)";',
-                  LOADER.read_text(encoding="utf-8", newline=""))
-    return m.group(1) if m else None
+    """localhost 默认命中 local-dev 部署目标 → api（PHASE 1 起不再写死在源码里）。"""
+    return "api"
 
 
 def set_mode(mode):
-    if current_mode() == mode:
-        return
-    s = LOADER.read_text(encoding="utf-8", newline="")
-    s2 = re.sub(r'const DATA_SOURCE_MODE = "(?:api|json)";',
-                f'const DATA_SOURCE_MODE = "{mode}";', s)
-    with open(LOADER, "w", encoding="utf-8", newline="") as f:
-        f.write(s2)
+    """保留签名兼容调用点：现在不改写任何源码，模式切换走 ?datasource= 覆写。"""
+    if mode not in ("api", "json"):
+        raise SystemExit(f"[FATAL] 未知数据源模式 {mode}")
 
 
 def psql(sql):
@@ -311,17 +306,21 @@ def main():
         check(f"D1-AC6：{tag} 不产生异常（有可判定输出）", ok_render, (raw or "")[:80])
         check(f"D1-AC6：{tag} Console 无错误", not err, str(err)[:160])
 
-    check("data-loader.js 全程保持 api 模式（未被验收脚本污染）",
+    check("数据源切换不再改写源码（验收全程零污染）",
           current_mode() == "api" and LOADER.read_bytes() == loader_bytes_api,
           f"mode={current_mode()}")
 
     # ---------- AC7：回归 ----------
     print("\n== D1-AC7：B2 / B3 / C1 / C2 回归 ==", flush=True)
+    # 顶层驱动负责把每个套件**各跑一次**：对被调套件传 --no-nested，
+    # 避免 step11→step10→step8→step3/step6 的三层嵌套（曾经一次验收 1.5 小时并跑挂 Edge）。
     for script, label in [("step3_verify_data.py", "step3（数据 / API 层）"),
                           ("step6_verify_workflow.py", "step6（B3 工作流）"),
                           ("step8_verify_map.py", "step8（C1 地图）"),
                           ("step10_verify_search.py", "step10（C2 检索）")]:
-        p = subprocess.run([PYTHON, "-u", script], cwd=SCRIPTS,
+        extra = ["--no-nested"] if script in (
+            "step8_verify_map.py", "step10_verify_search.py") else []
+        p = subprocess.run([PYTHON, "-u", script, *extra], cwd=SCRIPTS,
                            capture_output=True, text=True, encoding="utf-8", errors="replace")
         tail = [l for l in (p.stdout or "").splitlines() if l.startswith(("TOTAL=", "FAILED"))]
         check(f"D1-AC7：{label} 全部 PASS", p.returncode == 0, (tail[-1] if tail else "")[:200])

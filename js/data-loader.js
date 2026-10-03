@@ -10,16 +10,18 @@
       经人工批准后采用「代理主键 id + 原复合键保留为 UNIQUE」的物理兼容方案，
       业务关系语义不变。详见 IMPLEMENTATION-002.md「Known Issues #1 → RESOLVED」）
    至此：六类核心对象 + 全部 Source Relation 的 Runtime 数据均来自 API，
-   data/*.json 降级为 Migration Baseline / Fallback / Historical Artifact。
-   切换只发生在本文件内，页面脚本零改动。
+   data/*.json 降级为 Migration Baseline / Fallback / Public Static Demo 数据源。
 
+   PHASE 1：api ↔ json 的切换不再是本文件里的编译期常量，而是由 js/config.js
+   按部署目标解析（“切换只发生在这两个文件内”，页面脚本仍然零改动）。
+   ---------------------------------------------------------------------
    错误处理约定：
    - 网络失败 / 文件不存在 / JSON 解析失败 / API 载荷异常 → 抛出 DataLoadError
    - 同时用 console.error 记录技术细节
    - 调用方（页面脚本）负责把错误展示为用户可理解的状态
    ============================================================ */
 
-import { APP_CONFIG } from "./config.js";
+import { APP_CONFIG, DATASOURCE } from "./config.js";
 import { withBase } from "./utils.js";
 
 /** 自定义错误类型：携带发生原因和出错的地址，便于排查 */
@@ -34,16 +36,23 @@ export class DataLoadError extends Error {
 }
 
 /* ------------------------------------------------------------
-   Issue 001 — 数据源切换配置
-   仅本文件可见：页面脚本、URL、UI、data/*.json 均不感知数据来源。
-   DATA_SOURCE_MODE：
-     "api"  → 六类核心对象走 Directus API（默认，B2 生效路径）
-     "json" → 全部走 data/*.json（回退开关，不需要改动任何页面代码）
+   数据源：不再在本文件写死。唯一的真源是 js/config.js 的 DATASOURCE，
+   它   按「部署目标白名单 + URL 覆写 + HTTPS 护栏」在运行时解析，三类目标分别是：
+     - Local Dynamic Development  → api 模式，地址取自 config.js 的本地目标
+     - Public Static Demo (Pages)  → json 模式，读 data/*.json
+     - Future Production (PHASE 2) → api 模式，地址为待人工登记的 HTTPS 域名
+   这里只做消费，不做判断；collections 映射属于契约的一部分，留在本地。
+   解析结果在控制台留痕，便于线上排障（不含任何凭据）。
    ------------------------------------------------------------ */
-const DATA_SOURCE_MODE = "api";
+
+console.info(
+  `[data-loader] datasource=${DATASOURCE.id} mode=${DATASOURCE.mode}`
+  + (DATASOURCE.apiBaseUrl ? ` api=${DATASOURCE.apiBaseUrl}` : " api=none")
+  + ` — ${DATASOURCE.reason}`
+);
 
 export const API_DATASOURCE = {
-  baseUrl: "http://localhost:8055",
+  baseUrl: DATASOURCE.apiBaseUrl,
   // 核心对象 → Directus collection 名（与 PostgreSQL 表名一致）
   collections: {
     countries: "country",
@@ -71,9 +80,11 @@ const TECHNICAL_PK_COLLECTIONS = new Set([
   "award_result_source", "case_source"
 ]);
 
-/** 判断某个对象是否改走 API */
+/** 判断某个对象是否改走 API（必须同时有模式与目标地址，避免半配置状态） */
 function useApi(key) {
-  return DATA_SOURCE_MODE === "api" && Boolean(API_DATASOURCE.collections[key]);
+  return DATASOURCE.mode === "api"
+      && Boolean(API_DATASOURCE.baseUrl)
+      && Boolean(API_DATASOURCE.collections[key]);
 }
 
 /**

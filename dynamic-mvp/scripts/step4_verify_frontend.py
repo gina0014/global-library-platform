@@ -85,27 +85,28 @@ def run_suite(tasks, wait_default=4500):
     return out
 
 
+def ds(url, mode):
+    """给 URL 附加运行时数据源覆写参数（PHASE 1 起，模式切换不再改写源码）。
+
+    改造前：本文件用 rewrite data-loader.js 的方式切 api / json，
+            一旦验收中断就会把源码留在错误模式里，污染后续所有脚本。
+    改造后：模式由 js/config.js 在运行时解析，`?datasource=` 只在本次页面加载生效。
+    """
+    if mode == "api":
+        return url
+    sep = "&" if "?" in url else "?"
+    return f"{url}{sep}datasource=json"
+
+
 def current_mode():
-    s = LOADER.read_text(encoding="utf-8", newline="")
-    m = re.search(r'const DATA_SOURCE_MODE = "(api|json)";', s)
-    if not m:
-        raise SystemExit("[FATAL] 未找到 DATA_SOURCE_MODE 常量")
-    return m.group(1)
+    """localhost 默认命中 local-dev 目标 → api（无需改写源码）。"""
+    return "api"
 
 
 def set_mode(mode):
-    """切换 data-loader.js 的 DATA_SOURCE_MODE（api / json）。二进制读写，绝不改变换行符。"""
-    if current_mode() == mode:
-        return  # 已是目标模式，幂等
-    s = LOADER.read_text(encoding="utf-8", newline="")
-    s2 = re.sub(r'const DATA_SOURCE_MODE = "(?:api|json)";',
-                f'const DATA_SOURCE_MODE = "{mode}";', s)
-    if s2 == s:
-        raise SystemExit("[FATAL] 未能切换 DATA_SOURCE_MODE")
-    with open(LOADER, "w", encoding="utf-8", newline="") as f:
-        f.write(s2)
-    if current_mode() != mode:
-        raise SystemExit("[FATAL] 切换后校验失败")
+    """保留签名以兼容调用点：现在什么都不做，切换一律走 URL 覆写。"""
+    if mode not in ("api", "json"):
+        raise SystemExit(f"[FATAL] 未知数据源模式 {mode}")
 
 
 def ac2_write():
@@ -150,13 +151,12 @@ def main():
 
     # ---------- 阶段 B：json 模式（AC6 对照组） ----------
     print("\n== 阶段 B：json 模式（对照组） ==", flush=True)
-    try:
-        set_mode("json")
-        b = run_suite([{"tag": "ac6_json_mode", "url": LIB1}]
-                      + [{"tag": f"b2_json_{name}", "url": url} for name, url in B2_PAGES])
-    finally:
-        set_mode("api")
-    check("data-loader.js 已还原为 api 模式", md5(LOADER) == loader_md5_before)
+    # 不再改写源码：用 ?datasource=json 让这一次页面加载走 JSON baseline
+    b = run_suite([{"tag": "ac6_json_mode", "url": ds(LIB1, "json")}]
+                  + [{"tag": f"b2_json_{name}", "url": ds(url, "json")}
+                     for name, url in B2_PAGES])
+    set_mode("api")
+    check("数据源切换不再改写源码（验收零污染）", md5(LOADER) == loader_md5_before)
 
     api_text, api_err = a["ac6_api_mode"]
     json_text, _ = b["ac6_json_mode"]

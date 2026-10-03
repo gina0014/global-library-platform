@@ -15,6 +15,11 @@ directus-uploads/
 docker-*.dump
 *.sql.dump
 
+# 2b) 数据库备份产物（backup_db.py 产出）
+#     备份文件是运行时机密：含全量业务数据，绝不入库。
+#     manifest / sha256 同样不入库——它们描述的备份文件本身不存在于仓库。
+backups/
+
 # 3) 浏览器自动化产物（CDP profile / 抓取的 DOM / 测试证据）
 .cdp-profile/
 evidence/
