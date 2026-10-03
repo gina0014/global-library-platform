@@ -97,6 +97,15 @@
    且**不存在运行时回退**（API 失败直接抛 `DataLoadError`，不会自动改用 `data/*.json`）。
    因此公网访客打开任何数据页（图书馆 / 奖项 / 案例 / 检索 / Ask AI）都会落到错误态。
 
+   实测证据（2026-10-03）：
+
+   ```
+   GET https://gina0014.github.io/global-library-platform/js/data-loader.js
+   → HTTP 200
+   → const DATA_SOURCE_MODE = "api";
+   → baseUrl: "http://localhost:8055",
+   ```
+
 | 影响面 | 结论 |
 |---|---|
 | 泄露风险 | **无**。公网内容只有静态前端代码；不含 admin token、不含 LLM key、不含 `.env`、不含数据库 |
